@@ -15,7 +15,7 @@ import { DONATE_URL } from '@itsliaaa/baileys'
 import { fetchThumbnail, frame, greeting } from '../../lib/Utilities.js'
 
 export default {
-   command: ['credits', 'script'],
+   command: ['credits', 'script', 'thanksto'],
    hidden: 'sc',
    category: 'other',
    async run(m) {
@@ -32,7 +32,7 @@ export default {
          'And of course… *You* ✨'
       ], '🧪')
       const printSourceCode = frame('SOURCE CODE', [
-         'https://github.com/itsliaaa Coming Soon (⁠･ั⁠ω⁠･ั⁠)'
+         'https://github.com/itsliaaa/starseed#readme'
       ], '🧩')
       const printDonateUrl = frame('DONATE', [
          DONATE_URL
