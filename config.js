@@ -13,17 +13,17 @@ Object.assign(global, {
    // Bot name
    botName: 'Starseed',
 
-   // Bot phone number (IMPORTANT for pairing code)
-   botNumber: '6281111111111',
-
    // Footer text
    footer: '✦ Starseed',
 
-   // User default limit (used for reset too)
-   defaultLimit: 15,
+   // Bot phone number (IMPORTANT for pairing code)
+   botNumber: '6281111111111',
 
    // Pairing using code method (set to false to use QR)
    pairingCode: false,
+
+   // User default limit (used for reset too)
+   defaultLimit: 15,
 
    // Sticker pack name
    stickerPackName: '📦 Starseed Sticker',

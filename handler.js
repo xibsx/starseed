@@ -167,7 +167,7 @@ const Connect = async () => {
 
    sock.ev.on('groups.update', (groups) => {
       for (const group of groups)
-         if (store.hasGroup(group.id)) {
+         if (store.hasGroup(group.id))
             store.setGroup(
                group.id,
                Object.assign(
@@ -175,7 +175,6 @@ const Connect = async () => {
                   group
                )
             )
-         }
          else
             store.setGroup(group.id, group)
    })
@@ -325,8 +324,11 @@ const Connect = async () => {
 
    sock.ev.on('messages.upsert', async ({ messages }) => {
       for (const message of messages) {
+         if (!message.message) continue
+
          Serialize(sock, message)
-         if (!message.message || !message.type) continue
+
+         if (!message.type) continue
 
          let groupMetadata = store.getGroup(message.chat)
 
