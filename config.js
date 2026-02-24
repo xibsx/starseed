@@ -81,7 +81,7 @@ Object.assign(global, {
 
 setGlobalDispatcher(
    new Agent({
-      connections: 2,
+      connections: 3,
       pipelining: 1,
       keepAliveMaxTimeout: 15_000,
       connectTimeout: 10_000,

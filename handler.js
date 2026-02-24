@@ -19,13 +19,12 @@ import { existsSync, mkdirSync, unlinkSync, readdirSync } from 'fs'
 import { join } from 'path'
 import pino from 'pino'
 import phoneNumber from 'awesome-phonenumber'
-import cron from 'node-cron'
 import qrCode from 'qrcode'
 
 import { SCHEMA } from './lib/Constants.js'
 import { Database, Store } from './lib/Database.js'
 import { readMessage, Serialize, shouldUpdatePresence, StickerCommand } from './lib/Serialize.js'
-import { applySchema, cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, greeting, isEmptyObject, messageLogger, Sender, toTime } from './lib/Utilities.js'
+import { applySchema, cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, messageLogger, Sender, toTime } from './lib/Utilities.js'
 import { CommandIndex, EventIndex, ModuleCache, ScanDirectory } from './lib/Watcher.js'
 import AntiSpam from './lib/AntiSpam.js'
 
@@ -251,13 +250,13 @@ const Connect = async () => {
             metadata.participants.find(x => x.id === participant.id).admin = 'admin'
 
             if (!isMuted)
-               sock.sendText(id, `🎉 @${userId.split('@')[0]} promoted by @${author.split('@')[0]}.`)
+               sock.sendText(id, `🎉 @${userId.split('@')[0]} promoted to admin by @${author.split('@')[0]}.`)
          }
          else if (action === 'demote') {
             metadata.participants.find(x => x.id === participant.id).admin = false
 
             if (!isMuted)
-               sock.sendText(id, `📥 @${userId.split('@')[0]} demoted by @${author.split('@')[0]}.`)
+               sock.sendText(id, `⬇️ @${userId.split('@')[0]} was demoted from admin by @${author.split('@')[0]}.`)
          }
          else if (action === 'remove') {
             metadata.participants = metadata.participants.filter(x => x.id !== participant.id)
@@ -571,18 +570,22 @@ const Connect = async () => {
       }
    })
 
-   cron.schedule('0 0 * * *', () => {
-      for (const user of db.database.users.values())
-         if (user.limit < defaultLimit)
-            user.limit = defaultLimit
+   const scheduleDailyReset = () => {
+      const resetTimeout = getNextMidnight(localTimezone)
 
-      const setting = db.getSetting()
-      setting.lastReset = Date.now()
+      setTimeout(() => {
+         for (const user of db.database.users.values())
+            if (user.limit < defaultLimit)
+               user.limit = defaultLimit
 
-      db.writeToFile()
-   }, {
-      timezone: localTimezone
-   })
+         setting.lastReset = Date.now()
+         db.writeToFile()
+
+         scheduleDailyReset()
+      }, resetTimeout)
+   }
+
+   scheduleDailyReset()
 
    const check = setInterval(async () => {
       await db.writeToFile()

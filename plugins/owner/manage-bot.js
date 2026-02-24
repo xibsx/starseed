@@ -4,7 +4,8 @@ import { createWriteStream, createReadStream } from 'fs'
 import { readdir, rename } from 'fs/promises'
 import { basename, join, relative, resolve } from 'path'
 
-import { createFileName, isMimeImage, persistToFile } from '../../lib/Utilities.js'
+import { createFileName, isMimeImage, persistToFile, toArray } from '../../lib/Utilities.js'
+import { ModuleCache } from '../../lib/Watcher.js'
 
 const MENU_STYLES = {
    1: '🌱 `Extended Text Message` with `externalAdReply`.',
@@ -126,6 +127,15 @@ export default {
          const [cmd] = args
          if (!cmd)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} claim`)
+         const commands = new Set()
+         for (const modules of ModuleCache.values()) {
+            const cachedCommand = modules.command
+            if (cachedCommand)
+               for (const cmds of toArray(cachedCommand))
+                  commands.add(cmds)
+         }
+         if (!commands.has(cmd))
+            return m.reply('❌ Command not found.')
          if (setting.disabledCommand.includes(cmd))
             return m.reply('💭 Command already disabled.')
          setting.disabledCommand.push(cmd)
