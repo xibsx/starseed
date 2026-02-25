@@ -33,12 +33,6 @@ Object.assign(global, {
 
    // ********** ADVANCED SETTINGS ********** //
 
-   // Read messages
-   onlineStatus: true,
-
-   // Slow mode (important to avoid being banned by Meta)
-   slowMode: false,
-
    // Auth state folder name (optional)
    authFolder: 'session',
 
@@ -83,9 +77,10 @@ setGlobalDispatcher(
    new Agent({
       connections: 3,
       pipelining: 1,
-      keepAliveMaxTimeout: 15_000,
-      connectTimeout: 10_000,
-      bodyTimeout: 30_000,
+      keepAliveTimeout: 2_000,
+      keepAliveMaxTimeout: 30_000,
+      connectTimeout: 5_000,
+      bodyTimeout: 45_000,
       maxRedirections: 2,
       connect: {
          family: 4

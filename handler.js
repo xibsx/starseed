@@ -72,11 +72,11 @@ const Connect = async () => {
 
    sock.ev.on('connection.update', async (update) => {
       if (update.connection === 'connecting' && pairingCode && !sock.authState.creds.registered) {
-         const { default: phoneNumber } = await import('awesome-phonenumber')
+         const { default: PhoneNumber } = await import('awesome-phonenumber')
 
          await delay(1500)
 
-         const code = await sock.requestPairingCode(phoneNumber('+' + (botNumber?.toString() || '').replace(/\D/g, '')).getNumber('e164').replace(/\D/g, ''))
+         const code = await sock.requestPairingCode(PhoneNumber('+' + (botNumber?.toString() || '').replace(/\D/g, '')).getNumber('e164').replace(/\D/g, ''))
          console.log('🔗 Pairing code', ':', code.substring(0, 4) + '-' + code.substring(4))
       }
 
@@ -142,9 +142,9 @@ const Connect = async () => {
       }
 
       if (update.qr && !pairingCode) {
-         const { default: qrCode } = await import('qrcode')
+         const { default: QRCode } = await import('qrcode')
 
-         qrCode.toString(update.qr, {
+         QRCode.toString(update.qr, {
             type: 'terminal',
             small: true
          }, (error, string) => {
@@ -401,10 +401,10 @@ const Connect = async () => {
             setting.byteIngress += fileSize
          }
 
-         if (onlineStatus && shouldUpdatePresence(message))
-            await sock.readMessages([message.key])
+         if (setting.onlineStatus && shouldUpdatePresence(message))
+            sock.readMessages([message.key])
 
-         if (slowMode)
+         if (setting.slowMode)
             await delay(randomInteger(100, 3000))
 
          const isOwner = message.fromMe || message.sender.startsWith(ownerNumber)

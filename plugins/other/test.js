@@ -80,6 +80,8 @@ export default {
          const printSettings = frame('SETTINGS', [
             `*Mode*: ${setting.self ? '🔒 Self' : '🌐 Public'}`,
             `*Group Only*: ${setting.groupOnly ? '✅' : '❌'}`,
+            `*Online Status*: ${setting.onlineStatus ? '✅' : '❌'}`,
+            `*Slow Mode*: ${setting.slowMode ? '✅' : '❌'}`,
             `*Prefixes*: [${setting.prefixes}]`
          ], '⚙️')
          m.reply(

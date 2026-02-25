@@ -17,6 +17,18 @@ const MENU_STYLES = {
    7: '🖼️ `Interactive Message` with `Carousel Message`.'
 }
 
+const SETTING_MAPS = {
+   gconly: 'groupOnly',
+   onlinestatus: 'onlineStatus',
+   slowmode: 'slowMode'
+}
+
+const PRETTY_SETTING_MAPS = {
+   gconly: 'Group Only',
+   onlinestatus: 'Online Status',
+   slowmode: 'Slow Mode'
+}
+
 const EXCLUDE = new Set(['node_modules', 'yarn.lock', '.git', 'session', databaseFilename, storeFilename, temporaryFolder])
 
 const writeAndDrain = (stream, chunk) =>
@@ -96,7 +108,7 @@ const atomicWrite = async (db, store) =>
    ])
 
 export default {
-   command: ['backup', 'backupsc', 'disable', 'enable', 'gconly', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'public', 'self', '+prefix', '-prefix'],
+   command: ['backup', 'backupsc', 'disable', 'enable', 'gconly', 'onlinestatus', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', '+prefix', '-prefix'],
    category: 'owner',
    async run (m, {
       sock,
@@ -153,22 +165,28 @@ export default {
          })
          m.reply(`✅ Successfully enabling *"${cmd}"*.`)
       }
-      else if (command === 'gconly') {
+      else if (
+         command === 'gconly' ||
+         command === 'onlinestatus' ||
+         command === 'slowmode'
+      ) {
          const [option] = args
          if (!option)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} on`)
          if (option !== 'on' && option !== 'off')
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} on`)
          const isActivating = option === 'on'
+         const keySetting = SETTING_MAPS[command] || command
+         const prettyKeyName = PRETTY_SETTING_MAPS[command]
          let print = isActivating ?
-            `❌ Group Only already activated.` :
-            `❌ Group Only already deactivated.`
-         if (setting.groupOnly === isActivating)
+            `❌ ${prettyKeyName} already activated.` :
+            `❌ ${prettyKeyName} already deactivated.`
+         if (setting[keySetting] === isActivating)
             return m.reply(print)
-         setting.groupOnly = isActivating
+         setting[keySetting] = isActivating
          print = isActivating ?
-            `✅ Successfully activating Group Only.` :
-            `✅ Successfully deactivating Group Only.`
+            `✅ Successfully activating ${prettyKeyName}.` :
+            `✅ Successfully deactivating ${prettyKeyName}.`
          m.reply(print)
       }
       else if (command === 'resetlimit') {
@@ -220,7 +238,7 @@ export default {
       }
       else if (command === 'setbio') {
          if (!text)
-            return m.reply(`👉🏻 *Example*: ${isPrefix + command} WhatsApp Automation`)
+            return m.reply(`??🏻 *Example*: ${isPrefix + command} WhatsApp Automation`)
          if (text.length > 50)
             return m.reply('❌ Max characters for profile bio is 50.')
          await sock.updateProfileStatus(text)
