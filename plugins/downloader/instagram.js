@@ -18,6 +18,8 @@ export default {
             return m.reply('❌ Invalid URL.')
          m.react('🕒')
          const data = await instagram(args[0])
+         if (!data.media.length)
+            return m.reply('❌ Failed to get data.')
          if (data.media.length <= 2)
             return sock.sendMedia(m.chat, data.media[0].url, '', m)
          sock.sendMessage(m.chat, {

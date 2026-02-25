@@ -12,7 +12,6 @@
 
 import { spawn } from 'child_process'
 import { fileURLToPath } from 'url'
-import CFonts from 'cfonts'
 
 const file = fileURLToPath(
    new URL('./handler.js', import.meta.url)
@@ -50,27 +49,32 @@ const Start = () => {
    })
 }
 
-console.log('\x1Bc')
+const Print = async () => {
+   const { default: CFonts } = await import('cfonts')
 
-CFonts.say('STARSEED', {
-   font: 'tiny',
-   align: 'center',
-   gradient: ['#F8ACD8', '#CCE8FD']
-})
+   console.log('\x1Bc')
 
-CFonts.say('GitHub: https://github.com/itsliaaa/starseed', {
-   colors: ['system'],
-   font: 'console',
-   align: 'center'
-})
+   CFonts.say('STARSEED', {
+      font: 'tiny',
+      align: 'center',
+      gradient: ['#F8ACD8', '#CCE8FD']
+   })
 
-if (major < 22) {
-   console.error(
-      `\n❌ This script requires Node.js 22+ to run reliably.\n` +
-      `   You are using Node.js ${process.versions.node}.\n` +
-      `   Please upgrade to Node.js 22+ to proceed.\n`
-   )
-   process.exit(0)
+   CFonts.say('GitHub: https://github.com/itsliaaa/starseed', {
+      colors: ['system'],
+      font: 'console',
+      align: 'center'
+   })
+
+   if (major < 22) {
+      console.error(
+         `\n❌ This script requires Node.js 22+ to run reliably.\n` +
+         `   You are using Node.js ${process.versions.node}.\n` +
+         `   Please upgrade to Node.js 22+ to proceed.\n`
+      )
+      process.exit(0)
+   }
 }
 
+Print()
 Start()

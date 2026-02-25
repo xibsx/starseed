@@ -15,17 +15,14 @@ import './error.js'
 
 import { Boom } from '@hapi/boom'
 import { areJidsSameUser, delay, DisconnectReason, isLidUser, isJidGroup, isJidMetaAI, jidNormalizedUser, makeCacheableSignalKeyStore, makeWASocket, useMultiFileAuthState } from '@itsliaaa/baileys'
-import { existsSync } from 'fs'
 import { mkdir, unlink, readdir } from 'fs/promises'
 import { join } from 'path'
 import pino from 'pino'
-import phoneNumber from 'awesome-phonenumber'
-import qrCode from 'qrcode'
 
 import { SCHEMA } from './lib/Constants.js'
 import { Database, Store } from './lib/Database.js'
 import { Serialize, shouldUpdatePresence, StickerCommand } from './lib/Serialize.js'
-import { applySchema, cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, messageLogger, randomInteger, Sender, toTime } from './lib/Utilities.js'
+import { applySchema, cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, isFileExists, messageLogger, randomInteger, Sender, toTime } from './lib/Utilities.js'
 import { CommandIndex, EventIndex, ModuleCache, ScanDirectory } from './lib/Watcher.js'
 import AntiSpam from './lib/AntiSpam.js'
 
@@ -44,13 +41,13 @@ const Connect = async () => {
    const db = Database(databasePath)
    const store = Store(storePath)
 
-   if (existsSync(databasePath))
+   await isFileExists(databasePath) &&
       await db.readFromFile()
 
-   if (existsSync(storePath))
+   await isFileExists(storePath) &&
       await store.readFromFile()
 
-   if (!existsSync(temporaryFolder))
+   await isFileExists(temporaryFolder) ||
       await mkdir(temporaryFolderPath, { recursive: true })
 
    const sock = makeWASocket({
@@ -75,9 +72,12 @@ const Connect = async () => {
 
    sock.ev.on('connection.update', async (update) => {
       if (update.connection === 'connecting' && pairingCode && !sock.authState.creds.registered) {
+         const { default: phoneNumber } = await import('awesome-phonenumber')
+
          await delay(1500)
+
          const code = await sock.requestPairingCode(phoneNumber('+' + (botNumber?.toString() || '').replace(/\D/g, '')).getNumber('e164').replace(/\D/g, ''))
-         console.log('🔗 Pairing code', ':', code)
+         console.log('🔗 Pairing code', ':', code.substring(0, 4) + '-' + code.substring(4))
       }
 
       if (update.connection === 'close') {
@@ -141,7 +141,9 @@ const Connect = async () => {
          console.log(`🔗 Successfully loaded ${ModuleCache.size} plugins and ${CommandIndex.size} commands`)
       }
 
-      if (update.qr && !pairingCode)
+      if (update.qr && !pairingCode) {
+         const { default: qrCode } = await import('qrcode')
+
          qrCode.toString(update.qr, {
             type: 'terminal',
             small: true
@@ -153,6 +155,7 @@ const Connect = async () => {
 
             console.log(string)
          })
+      }
 
       if (update.receivedPendingNotifications) {
          console.log(`🕒 Loading message, please wait a moment...`)
@@ -286,8 +289,7 @@ const Connect = async () => {
 
    sock.ev.on('presence.update', async ({ id, presences }) => {
       for (const presence in presences) {
-         if (isJidGroup(presence))
-            continue
+         if (isJidGroup(presence)) continue
 
          const userId = await sock.findUserId(presence)
          if (!userId.phoneNumber ||
@@ -295,12 +297,10 @@ const Connect = async () => {
                sock.user.decodedId,
                userId.phoneNumber
             )
-         )
-            continue
+         ) continue
 
          const userData = db.getUser(userId.phoneNumber)
-         if (!userData)
-            continue
+         if (!userData) continue
 
          const condition = presences[presence]
          if (

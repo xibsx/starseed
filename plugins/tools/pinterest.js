@@ -3,6 +3,7 @@ import { shuffleArray } from '../../lib/Utilities.js'
 
 export default {
    command: 'pinimg',
+   hidden: 'pins',
    category: 'tools',
    async run(m, {
       sock,
