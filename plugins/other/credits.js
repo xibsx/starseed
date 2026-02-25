@@ -25,6 +25,7 @@ export default {
       const printAPIs = frame('THIRD-PARTY SERVICES', [
          'rynn-k — Nekolabs API',
          'elrayyxml — Nexray API',
+         'faa — Faa API',
          'Deline Clarissa — Deline API'
       ], '🌐')
       const printTesters = frame('TESTERS & COMMUNITY', [

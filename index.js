@@ -57,7 +57,7 @@ const Print = async () => {
    CFonts.say('STARSEED', {
       font: 'tiny',
       align: 'center',
-      gradient: ['#F8ACD8', '#CCE8FD']
+      gradient: ['#CB9DF0', '#FFF9BF']
    })
 
    CFonts.say('GitHub: https://github.com/itsliaaa/starseed', {
@@ -65,16 +65,18 @@ const Print = async () => {
       font: 'console',
       align: 'center'
    })
-
-   if (major < 22) {
-      console.error(
-         `\n❌ This script requires Node.js 22+ to run reliably.\n` +
-         `   You are using Node.js ${process.versions.node}.\n` +
-         `   Please upgrade to Node.js 22+ to proceed.\n`
-      )
-      process.exit(0)
-   }
 }
 
 Print()
+
+if (major < 22) {
+   console.error(
+      `\n❌ This script requires Node.js 22+ to run reliably.\n` +
+      `   You are using Node.js ${process.versions.node}.\n` +
+      `   Please upgrade to Node.js 22+ to proceed.\n`
+   )
+
+   process.exit(0)
+}
+
 Start()

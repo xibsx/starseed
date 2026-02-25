@@ -9,11 +9,11 @@ export default {
    }) {
       if (!group.autoSticker || !m.msg?.mimetype)
          return
-      if (!isMimeImage(m.msg.mimetype) || !isMimeVideo(m.msg.mimetype))
+      if (!isMimeImage(m.msg.mimetype) && !isMimeVideo(m.msg.mimetype))
          return
       if (
          user.limit > 0 &&
-         (m.msg.seconds <= 10 || !m.msg?.mimetype) &&
+         (m.msg.seconds <= 10 || m.msg?.mimetype) &&
          !m.fromMe
       ) {
          const buffer = await m.download()

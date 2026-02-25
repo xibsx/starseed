@@ -82,7 +82,7 @@ const Connect = async () => {
 
       if (update.connection === 'close') {
          sock.end()
-
+console.log(update)
          const reason = new Boom(update.lastDisconnect?.error)?.output?.statusCode
          switch (reason) {
             case DisconnectReason.connectionLost:
@@ -468,6 +468,8 @@ const Connect = async () => {
          if (setting.groupOnly && message.isPrivate && !isPartner) return
 
          if (message.isGroup && group.mute && command !== 'unmute') return
+
+         if (message.isGroup && group.adminOnly && !isAdmin) return
 
          const plugin = CommandIndex.get(command)
 

@@ -37,6 +37,7 @@ export default {
          `*Welcome Message*: ${group.welcome ? '✅' : '❌'}`
       ], '🔧')
       const printStatus = frame('STATUS', [
+         `*Admin Only*: ${group.adminOnly ? '✅' : '❌'}`,
          `*Mute*: ${group.mute ? '✅' : '❌'}`
       ], '💬')
       m.reply(printGroupInfo + '\n\n' +

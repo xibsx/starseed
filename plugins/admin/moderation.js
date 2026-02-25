@@ -1,14 +1,17 @@
 const MODERATION_MAPS = {
+   adminonly: 'adminOnly',
    antidelete: 'antiDelete',
    antilink: 'antiLink',
    antispam: 'antiSpam',
    antitagstatus: 'antiTagStatus',
    antitoxic: 'antiToxic',
    antiwalink: 'antiWALink',
-   autosticker: 'autoSticker'
+   autosticker: 'autoSticker',
+   viewonce: 'viewOnceForwarder'
 }
 
 const PRETTY_MODERATION_MAPS = {
+   adminonly: 'Admin Only',
    antidelete: 'Anti Delete',
    antilink: 'Anti Link',
    antispam: 'Anti Spam',
@@ -16,12 +19,13 @@ const PRETTY_MODERATION_MAPS = {
    antiwalink: 'Anti WhatsApp Link',
    antitoxic: 'Anti Toxic',
    autosticker: 'Auto Sticker',
+   viewonce: 'View Once Forwarder',
    welcome: 'Welcome Message',
    left: 'Left Message'
 }
 
 export default {
-   command: ['antidelete', 'antilink', 'antispam', 'antitagstatus', 'antitoxic', 'antiwalink', 'autosticker', 'left', 'welcome'],
+   command: ['adminonly', 'antidelete', 'antilink', 'antispam', 'antitagstatus', 'antitoxic', 'antiwalink', 'autosticker', 'left', 'welcome'],
    category: 'admin',
    async run(m, {
       group,
