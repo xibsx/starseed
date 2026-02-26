@@ -22,7 +22,7 @@ import pino from 'pino'
 import { SCHEMA } from './lib/Constants.js'
 import { Database, Store } from './lib/Database.js'
 import { Serialize, shouldUpdatePresence, StickerCommand } from './lib/Serialize.js'
-import { applySchema, cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, isFileExists, messageLogger, randomInteger, Sender, toTime } from './lib/Utilities.js'
+import { cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, isFileExists, messageLogger, randomInteger, Sender, toTime } from './lib/Utilities.js'
 import { CommandIndex, EventIndex, ModuleCache, ScanDirectory } from './lib/Watcher.js'
 import AntiSpam from './lib/AntiSpam.js'
 
@@ -81,8 +81,6 @@ const Connect = async () => {
       }
 
       if (update.connection === 'close') {
-         sock.end()
-
          const reason = new Boom(update.lastDisconnect?.error)?.output?.statusCode
          switch (reason) {
             case DisconnectReason.connectionLost:
@@ -332,17 +330,12 @@ const Connect = async () => {
 
          let groupMetadata = store.getGroup(message.chat)
 
+         setting = db.getSetting()
+
          let user = db.getUser(message.sender)
          let group = db.getGroup(message.chat)
 
          store.setMessage(message)
-
-         if (isEmptyObject(setting))
-            Object.assign(setting, SCHEMA.Setting)
-         else
-            applySchema(setting, SCHEMA.Setting)
-
-         StickerCommand(message, setting.stickerCommand)
 
          if (!user) {
             user = {
@@ -354,10 +347,8 @@ const Connect = async () => {
 
             db.updateUser(message.sender, user)
          }
-         else {
+         else
             user.name = message.pushName
-            applySchema(user, SCHEMA.User)
-         }
 
          if (message.isGroup) {
             if (!groupMetadata) {
@@ -374,11 +365,11 @@ const Connect = async () => {
 
                db.updateGroup(message.chat, group)
             }
-            else {
+            else
                group.name = groupMetadata.subject
-               applySchema(group, SCHEMA.Group)
-            }
          }
+
+         StickerCommand(message, setting.stickerCommand)
 
          const {
             body,
@@ -586,6 +577,9 @@ const Connect = async () => {
             }
       }
    })
+
+   if (isEmptyObject(setting))
+      Object.assign(setting, SCHEMA.Setting)
 
    const scheduleDailyReset = () => {
       const resetTimeout = getNextMidnight(localTimezone)

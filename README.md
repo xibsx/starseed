@@ -61,7 +61,7 @@ $ pm2 start app.config.cjs && pm2 logs bot
 
 ### 🔧 Configuration
 
-Edit [config.json](https://github.com/itsliaaa/starseed/blob/main/config.js) to customize your bot:
+Edit [config.json](https://github.com/itsliaaa/starseed/blob/main/config.js) to customize the bot:
 
 ```javascript
 Object.assign(global, {
