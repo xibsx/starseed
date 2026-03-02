@@ -28,7 +28,7 @@ export default {
          const isGroup = command === 'broadcastgc' || command === 'bcgc'
          const bufferMedia = await q.download?.()
          const ids = isPrivate ?
-               [...db.database.users.keys()] :
+               [...db.users.keys()] :
                   isGroup ?
                      Object.keys(await sock.groupFetchAllParticipating()) :
                         []

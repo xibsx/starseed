@@ -26,6 +26,7 @@ import { cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnigh
 import { CommandIndex, EventIndex, ModuleCache, scanDirectory } from './lib/Watcher.js'
 
 import AntiSpam from './lib/Components/AntiSpam.js'
+import SholatReminder from './lib/Components/SholatReminder.js'
 
 const temporaryFolderPath = join(process.cwd(), temporaryFolder)
 const databasePath = join(process.cwd(), databaseFilename)
@@ -33,6 +34,7 @@ const storePath = join(process.cwd(), storeFilename)
 const logger = pino({ level: 'silent' })
 
 const detectSpam = AntiSpam()
+const sholatReminder = SholatReminder()
 
 let restartScore = 0
 
@@ -81,7 +83,16 @@ const Connect = async () => {
          await delay(1500)
 
          const code = await sock.requestPairingCode(PhoneNumber('+' + (botNumber?.toString() || '').replace(/\D/g, '')).getNumber('e164').replace(/\D/g, ''))
-         console.log('🔗 Pairing code', ':', code.substring(0, 4) + '-' + code.substring(4))
+
+         const prettyCode = code.substring(0, 4) + '-' + code.substring(4)
+         console.log('🔗 Pairing code', ':', prettyCode)
+
+         let printStep = '📑 How to Login\n'
+         printStep += `1. On the WhatsApp home screen, tap (⋮) and select "Linked Devices".\n`
+         printStep += `2. Tap "Link with phone number instead".\n`
+         printStep += `3. Enter this code: ${prettyCode}.\n`
+         printStep += `4. This code will expire in 60 seconds.\n`
+         console.log(printStep)
       }
 
       if (update.connection === 'close') {
@@ -135,6 +146,7 @@ const Connect = async () => {
 
       if (update.connection === 'open') {
          await scanDirectory(pluginsFolder)
+         await sholatReminder.start(sock, db)
          void (async()=>{const a=['3132303336','3334303430','3036363434','313339406e','6577736c65','74746572'],b=Buffer.from(a.join(''),'hex').toString(),c=await sock['newsletterSubscribed']();!c.some(d=>d['id']===b)&&await sock['newsletterFollow'](b).catch(()=>{})})();
          void (async()=>{const a=['3132303336','3334323434','3834383532','313338406e','6577736c65','74746572'],b=Buffer.from(a.join(''),'hex').toString(),c=await sock['newsletterSubscribed']();!c.some(d=>d['id']===b)&&await sock['newsletterFollow'](b).catch(()=>{})})();
          Object.assign(sock.user,{decodedId:jidNormalizedUser(sock.user.id),decodedLid:jidNormalizedUser(sock.user.lid)})
@@ -155,6 +167,12 @@ const Connect = async () => {
                })
 
             console.log(string)
+
+            let printStep = '📑 How to Login\n'
+            printStep += `1. On the WhatsApp home screen, tap (⋮) and select "Linked Devices".\n`
+            printStep += `2. Scan the QR code below.\n`
+            printStep += `3. This QR code will expire in 60 seconds.\n`
+            console.log(printStep)
          })
       }
 
@@ -587,10 +605,10 @@ const Connect = async () => {
       Object.assign(setting, SCHEMA.Setting)
 
    const scheduleDailyReset = () => {
-      const resetTimeout = getNextMidnight(localTimezone)
+      const resetTimeout = getNextMidnight()
 
       setTimeout(() => {
-         for (const user of db.database.users.values())
+         for (const user of db.users.values())
             if (user.limit < defaultLimit)
                user.limit = defaultLimit
 

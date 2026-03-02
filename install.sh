@@ -1,34 +1,83 @@
 #!/usr/bin/env bash
 set -e
 
-echo "🚀 Updating system..."
-sudo apt update -y && sudo apt upgrade -y
+OS="$(uname -s)"
 
-echo "📦 Installing required packages..."
-sudo apt install -y ffmpeg git curl
+echo "🔎 Detected OS: $OS"
 
-echo "🟢 Installing NVM (if not exists)..."
-if [ ! -d "$HOME/.nvm" ]; then
-    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
-fi
+install_node_nvm() {
+   echo "🟢 Installing NVM (if not exists)..."
+   if [ ! -d "$HOME/.nvm" ]; then
+      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.4/install.sh | bash
+   fi
 
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
-source ~/.bashrc
+   export NVM_DIR="$HOME/.nvm"
+   [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-echo "⚡ Installing Node.js 24 LTS..."
-nvm install 24
-nvm alias default 24
-nvm use default
+   echo "⚡ Installing Node.js 24 LTS..."
+   nvm install 24
+   nvm alias default 24
+   nvm use default
+}
 
-echo "📦 Enabling Corepack..."
-corepack enable
-corepack prepare yarn@stable --activate
+install_common_tools() {
+   echo "📦 Enabling Corepack..."
+   corepack enable
+   corepack prepare yarn@1.22.22 --activate
 
-echo "📥 Installing dependencies with Yarn..."
-yarn install 2>/dev/null
+   echo "📥 Installing dependencies..."
+   yarn install 2>/dev/null
 
-echo "🚀 Installing PM2 globally..."
-npm install -g pm2
+   echo "🚀 Installing PM2 globally..."
+   npm install -g pm2
+}
 
-echo "✅ Install complete! You can start now, or configure config.js first."
+case "$OS" in
+
+Linux)
+   if [ -n "$PREFIX" ] && [[ "$PREFIX" == *"com.termux"* ]]; then
+      echo "📱 Android (Termux) detected"
+
+      pkg update -y
+      pkg upgrade -y
+      pkg install -y nodejs-lts ffmpeg git curl
+
+      echo "⚡ Using built-in nodejs-lts (no NVM on Termux)"
+
+      install_common_tools
+   else
+      echo "🐧 Linux detected"
+
+      sudo apt update -y
+      sudo apt upgrade -y
+      sudo apt install -y ffmpeg git curl
+
+      install_node_nvm
+      install_common_tools
+   fi
+   ;;
+
+Darwin)
+   echo "🍎 macOS detected"
+
+   if ! command -v brew >/dev/null 2>&1; then
+      echo "❌ Homebrew not found. Install from https://brew.sh first."
+      exit 1
+   fi
+
+   brew update
+   brew install ffmpeg git curl
+
+   install_node_nvm
+   install_common_tools
+   ;;
+
+*)
+   echo "❌ Unsupported OS for this script."
+   echo "Use PowerShell installer for Windows."
+   exit 1
+   ;;
+
+esac
+
+echo "✅ Install complete!"

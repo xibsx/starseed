@@ -11,7 +11,7 @@ export default {
          const q = m.quoted?.url ? m.quoted : m
          const mimetype = (q.msg || q).mimetype
          if (!isMimeAudio(mimetype))
-            return m.reply('💭 Provide an audio to add the effects.')
+            return m.reply('💭 Provide an audio to apply the effects.')
          m.react('🕒')
          let set
          switch (command) {

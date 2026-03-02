@@ -8,7 +8,6 @@ export default {
    category: 'admin tools',
    async run(m, {
       sock,
-      db,
       group,
       groupMetadata,
       isPrefix,

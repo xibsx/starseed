@@ -79,6 +79,7 @@ export default {
          ], '📊')
          const printSettings = frame('SETTINGS', [
             `*Mode*: ${setting.self ? '🔒 Self' : '🌐 Public'}`,
+            `*Auto Download*: ${setting.autoDownload ? '✅' : '❌'}`,
             `*Group Only*: ${setting.groupOnly ? '✅' : '❌'}`,
             `*Online Status*: ${setting.onlineStatus ? '✅' : '❌'}`,
             `*Slow Mode*: ${setting.slowMode ? '✅' : '❌'}`,

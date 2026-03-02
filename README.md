@@ -48,15 +48,36 @@ To run the bot, I highly recommend the following services. They are not only aff
 Check this repository regularly for updates. The project is still under development. If you encounter any issues, please open an issue. Thank you!
 
 > [!NOTE]
-I’m not familiar with Windows because I primarily use Linux, so no Windows installation files are provided.
+The installer supports Linux, macOS (Darwin), Android (Termux), and Windows.
 
-Ensure that your configuration and server meet the requirements to avoid errors during installation or while running the bot. Then execute the following command on your Linux console:
+#### 🐧🍎📱 Linux / macOS / Android (Termux)
+
+Make sure your system meets the required dependencies. Then run:
+
 ```bash
-$ bash install.sh
+bash install.sh
+```
 
-# And, run the bot
+After installation completes, start the bot:
 
-$ pm2 start app.config.cjs && pm2 logs bot
+```bash
+pm2 start app.config.cjs
+pm2 logs bot
+```
+
+#### 🪟 Windows
+
+Run PowerShell as Administrator, then execute:
+
+```powershell
+.\install.ps1
+```
+
+After installation completes:
+
+```powershell
+pm2 start app.config.cjs
+pm2 logs bot
 ```
 
 ### 🔧 Configuration

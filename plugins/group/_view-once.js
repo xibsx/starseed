@@ -1,5 +1,5 @@
 /**
- * Preparing the view once forwarder feature.
+ * Preparing the automatic view once forwarder feature.
  * Waiting for Baileys updates.
  */
 

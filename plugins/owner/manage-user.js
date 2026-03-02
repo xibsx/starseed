@@ -39,7 +39,7 @@ export default {
          m.reply(`✅ Successfully removed @${userId.split('@')[0]} from partner.`)
       }
       else if (command === '-user') {
-         db.database.users.delete(user.jid)
+         db.deleteUser(user.jid)
          m.reply('✅ Successfully remove user from database.')
       }
       else if (command === 'ban') {

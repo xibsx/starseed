@@ -12,7 +12,7 @@ export default {
       setting,
       command
    }) {
-      const users = [...new Set(db.database.users.values())]
+      const users = [...new Set(db.users.values())]
       const isPartnerOrOwner = user =>
          setting.partner.includes(user.jid) ||
          user.jid.startsWith(ownerNumber) ||
