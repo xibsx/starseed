@@ -36,29 +36,19 @@ const logger = pino({ level: 'silent' })
 const detectSpam = AntiSpam()
 const sholatReminder = SholatReminder()
 
-let restartScore = 0
+let isRestarting = false,
+   restartScore = 0
 
-const Connect = async () => {
+const Connect = async (db, store) => {
    const { state, saveCreds } = await useMultiFileAuthState(authFolder)
-
-   const db = Database(databasePath)
-   const store = Store(storePath)
-
-   await isFileExists(databasePath) &&
-      await db.readFromFile()
-
-   await isFileExists(storePath) &&
-      await store.readFromFile()
-
-   await isFileExists(temporaryFolder) ||
-      await mkdir(temporaryFolderPath, { recursive: true })
 
    const sock = makeWASocket({
       logger,
       cachedGroupMetadata: (jid) =>
          store.getGroup(jid),
       shouldIgnoreJid: (jid) =>
-         jid && isJidMetaAI(jid),
+         jid &&
+            isJidMetaAI(jid),
       getMessage: (key) =>
          store.getMessage({
             chat: key.remoteJid,
@@ -85,7 +75,7 @@ const Connect = async () => {
          const code = await sock.requestPairingCode(PhoneNumber('+' + (botNumber?.toString() || '').replace(/\D/g, '')).getNumber('e164').replace(/\D/g, ''))
 
          const prettyCode = code.substring(0, 4) + '-' + code.substring(4)
-         console.log('🔗 Pairing code', ':', prettyCode)
+         console.log('🔗 Pairing code', ':', prettyCode, '\n')
 
          let printStep = '📑 How to Login\n'
          printStep += `1. On the WhatsApp home screen, tap (⋮) and select "Linked Devices".\n`
@@ -95,7 +85,9 @@ const Connect = async () => {
          console.log(printStep)
       }
 
-      if (update.connection === 'close') {
+      if (update.connection === 'close' && !isRestarting) {
+         isRestarting = true
+
          const reason = new Boom(update.lastDisconnect?.error)?.output?.statusCode
          switch (reason) {
             case DisconnectReason.connectionLost:
@@ -135,13 +127,22 @@ const Connect = async () => {
          }
 
          ++restartScore
-         if (restartScore >= 3) {
+         if (restartScore > 4) {
             console.log('❌ The socket had to be stopped due to an unstable connection.')
 
             process.exit(0)
          }
 
-         Connect()
+         await delay(1500)
+
+         try {
+            sock.ev.removeAllListeners()
+            sock.ws.close()
+         }
+         catch { }
+
+         isRestarting = false
+         return Connect(db, store)
       }
 
       if (update.connection === 'open') {
@@ -342,16 +343,19 @@ const Connect = async () => {
    })
 
    sock.ev.on('messages.upsert', async ({ messages }) => {
+      setting = db.getSetting()
+
+      const timestampMs = Date.now()
+      const timestampSec = timestampMs / 1000
+
       for (const message of messages) {
-         if (!message.message || !sock.user?.id) continue
+         if (!message.message || timestampSec - message.messageTimestamp > 60) continue
 
          Serialize(sock, message)
 
-         if (!message.type) continue
+         if (!message.type || store.hasMessage(message)) continue
 
          let groupMetadata = store.getGroup(message.chat)
-
-         setting = db.getSetting()
 
          let user = db.getUser(message.sender)
          let group = db.getGroup(message.chat)
@@ -437,7 +441,7 @@ const Connect = async () => {
                p.id === sock.user.decodedLid && p.admin
             )
 
-         user.lastSeen = Date.now()
+         user.lastSeen = timestampMs
 
          if (message.isGroup) {
             const isSpam = group.antiSpam &&
@@ -447,22 +451,22 @@ const Connect = async () => {
                !message.type.startsWith('react') &&
                detectSpam(message.sender)
 
-            group.lastActivity = user.lastSeen
+            group.lastActivity = timestampMs
 
             if (group.participants[message.sender]) {
                group.participants[message.sender].messages++
-               group.participants[message.sender].lastSeen = user.lastSeen
+               group.participants[message.sender].lastSeen = timestampMs
             }
             else
                group.participants[message.sender] = {
                   ...SCHEMA.Participant,
                   messages: 1,
-                  lastSeen: user.lastSeen
+                  lastSeen: timestampMs
                }
 
             if (!isEmptyObject(user.afkContext)) {
                const print = frame('HELLO', [
-                  `💭 System detects activity from @${user.jid.split('@')[0]} after being offline for: ${toTime(user.lastSeen - user.afkTimestamp)}`,
+                  `💭 System detects activity from @${user.jid.split('@')[0]} after being offline for: ${toTime(timestampMs - user.afkTimestamp)}`,
                   `🏷️ *Reason*: ${user.afkReason || '-'}`
                ], '👀')
                await sock.sendText(message.chat, print, user.afkContext)
@@ -526,11 +530,12 @@ const Connect = async () => {
                if (user.limit < 1)
                   return message.reply(`⚠️ You reached the limit and will be reset at 00.00 or try \`${isPrefix}claim\` command to claim limit.`)
 
-               const limitCost = plugin.limit === true ?
-                  1 :
-                  typeof plugin.limit === 'number' ?
-                     plugin.limit :
-                     0
+               const limitCost =
+                  plugin.limit === true ?
+                     1 :
+                     typeof plugin.limit === 'number' ?
+                        plugin.limit :
+                        0
 
                if (user.limit >= limitCost)
                   user.limit -= limitCost
@@ -603,11 +608,29 @@ const Connect = async () => {
 
    if (isEmptyObject(setting))
       Object.assign(setting, SCHEMA.Setting)
+}
+
+const Setup = async () => {
+   const db = Database(databasePath)
+   const store = Store(storePath)
+
+   await isFileExists(databasePath) &&
+      await db.readFromFile()
+
+   await isFileExists(storePath) &&
+      await store.readFromFile()
+
+   await isFileExists(temporaryFolder) ||
+      await mkdir(temporaryFolderPath, { recursive: true })
+
+   Connect(db, store)
 
    const scheduleDailyReset = () => {
       const resetTimeout = getNextMidnight()
 
       setTimeout(() => {
+         const setting = db.getSetting()
+
          for (const user of db.users.values())
             if (user.limit < defaultLimit)
                user.limit = defaultLimit
@@ -640,8 +663,10 @@ const Connect = async () => {
                await unlink(filePath)
             }
       }
-      catch { }
+      catch (error) {
+         console.error('❌ Temp cleanup error', ':', error)
+      }
    }, temporaryFileInterval)
 }
 
-Connect()
+Setup()

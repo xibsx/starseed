@@ -1,13 +1,11 @@
 {
-   "name": "starseed",
-   "version": "0.2.0-beta.1",
+   "name": "@itsliaaa/starseed",
+   "version": "0.2.0-beta.2",
    "description": "A simple WhatsApp bot built on Baileys",
    "main": "index.js",
    "type": "module",
    "scripts": {
-      "setup": "bash install.sh",
-      "start": "pm2 start app.config.cjs",
-      "logs": "pm2 logs bot"
+      "start": "NODE_ENV=production node --max-old-space-size=384 index.js"
    },
    "engines": {
       "node": ">=22.0.0"
