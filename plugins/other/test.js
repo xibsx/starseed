@@ -82,6 +82,7 @@ export default {
             `*Auto Download*: ${setting.autoDownload ? '✅' : '❌'}`,
             `*Group Only*: ${setting.groupOnly ? '✅' : '❌'}`,
             `*Online Status*: ${setting.onlineStatus ? '✅' : '❌'}`,
+            `*Reject Call*: ${setting.rejectCall ? '✅' : '❌'}`,
             `*Slow Mode*: ${setting.slowMode ? '✅' : '❌'}`,
             `*Prefixes*: [${setting.prefixes}]`
          ], '⚙️')

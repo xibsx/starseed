@@ -1,11 +1,11 @@
 {
    "name": "@itsliaaa/starseed",
-   "version": "0.2.0-beta.2",
+   "version": "0.2.0-beta.3",
    "description": "A simple WhatsApp bot built on Baileys",
    "main": "index.js",
    "type": "module",
    "scripts": {
-      "start": "NODE_ENV=production node --max-old-space-size=384 index.js"
+      "start": "NODE_ENV=production node --max-old-space-size=320 index.js"
    },
    "engines": {
       "node": ">=22.0.0"

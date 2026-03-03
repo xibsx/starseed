@@ -18,7 +18,9 @@ export default {
                bratSticker(text) :
                bratVideoSticker(text)
          )
-         sock.sendMedia(m.chat, data, '', m, { sticker: true })
+         sock.sendMedia(m.chat, data, '', m, {
+            sticker: true
+         })
       }
       catch (error) {
          console.error(error)

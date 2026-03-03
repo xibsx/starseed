@@ -24,7 +24,7 @@ export default {
          m.react('🕒')
          sock.sendMedia(m.chat, await q.download(), '', m, {
             sticker: true,
-            mimeType: mimetype,
+            mimetype,
             stickerPackName: packName,
             stickerPackPublisher: publisher
          })

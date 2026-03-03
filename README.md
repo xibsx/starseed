@@ -5,7 +5,7 @@
 Starseed is a simple WhatsApp bot designed for quick setup and efficient use. It offers essential features such as sticker creation, social media content downloading, basic group management tools, and various general-purpose utilities, all accessible directly through WhatsApp.
 
 > [!CAUTION]
-This project directly implements [`@itsliaaa/baileys`](https://github.com/itsliaaa/baileys#readme). It is not compatible with other Baileys forks, including the original Baileys package.
+This project is a direct implementation of [`@itsliaaa/baileys`](https://github.com/itsliaaa/baileys#readme). If you choose to replace it with any other fork, all resulting issues or bugs are entirely your responsibility.
 
 ### ⚙️ Architecture Overview
 
@@ -142,7 +142,7 @@ export default {
 }
 ```
 
-See the documentation in [`@itsliaaa/baileys`](https://github.com/itsliaaa/baileys#readme) for details about sending interactive messages.
+See the documentation in [`@itsliaaa/baileys`](https://github.com/itsliaaa/baileys#-sending-interactive-messages) for details about sending interactive messages.
 
 ### 👤 Credits
 

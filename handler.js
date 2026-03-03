@@ -28,13 +28,14 @@ import { CommandIndex, EventIndex, ModuleCache, scanDirectory } from './lib/Watc
 import AntiSpam from './lib/Components/AntiSpam.js'
 import SholatReminder from './lib/Components/SholatReminder.js'
 
-const temporaryFolderPath = join(process.cwd(), temporaryFolder)
-const databasePath = join(process.cwd(), databaseFilename)
-const storePath = join(process.cwd(), storeFilename)
-const logger = pino({ level: 'silent' })
-
 const detectSpam = AntiSpam()
 const sholatReminder = SholatReminder()
+
+const logger = pino({ level: 'silent' })
+
+const databasePath = join(process.cwd(), databaseFilename)
+const storePath = join(process.cwd(), storeFilename)
+const temporaryFolderPath = join(process.cwd(), temporaryFolder)
 
 let isRestarting = false,
    restartScore = 0
@@ -203,30 +204,33 @@ const Connect = async (db, store) => {
    })
 
    sock.ev.on('call', async (calls) => {
-      for (const call of calls) {
-         let callFrom = call.callerPn || call.from
-         if (isLidUser(callFrom)) {
-            const result = await sock.findUserId(callFrom)
-            if (!callFrom.phoneNumber.startsWith('id'))
-               callFrom = result.phoneNumber
-         }
-
-         if (call.status === 'offer') {
-            const userData = db.getUser(callFrom)
-            ++userData.callAttempt
-
-            await sock.rejectCall(call.id, call.from)
-
-            if (userData.callAttempt >= 3) {
-               await sock.sendText(callFrom, '⚠️ You have called multiple times. Your account will now be blocked.')
-
-               await sock.updateBlockStatus(callFrom, 'block')
-               continue
+      if (setting.rejectCall)
+         for (const call of calls) {
+            let callFrom = call.callerPn || call.from
+            if (isLidUser(callFrom)) {
+               const result = await sock.findUserId(callFrom)
+               if (!callFrom.phoneNumber.startsWith('id'))
+                  callFrom = result.phoneNumber
             }
 
-            await sock.sendText(callFrom, '⚠️ Do not call again, or you will be blocked.')
+            if (call.status === 'offer') {
+               const userData = db.getUser(callFrom)
+               ++userData.callAttempt
+
+               await sock.rejectCall(call.id, call.from)
+
+               if (callFrom.startsWith(ownerNumber)) continue
+
+               if (userData.callAttempt >= 3) {
+                  await sock.sendText(callFrom, '⚠️ You have called multiple times. Your account will now be blocked.')
+
+                  await sock.updateBlockStatus(callFrom, 'block')
+                  continue
+               }
+
+               await sock.sendText(callFrom, '⚠️ Do not call again, or you will be blocked.')
+            }
          }
-      }
    })
 
    sock.ev.on('group-participants.update', async ({ id, author, participants, action }) => {

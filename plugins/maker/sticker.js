@@ -15,7 +15,9 @@ export default {
          const mimetype = (q.msg || q).mimetype
          if (!isMimeImage(mimetype) && !isMimeVideo(mimetype))
             return m.reply('💭 Reply media to make it as sticker.')
-         sock.sendMedia(m.chat, await q.download(), '', m, { sticker: true })
+         sock.sendMedia(m.chat, await q.download(), '', m, {
+            sticker: true
+         })
       }
       catch (error) {
          console.error(error)

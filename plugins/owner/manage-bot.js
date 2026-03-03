@@ -21,6 +21,7 @@ const SETTING_MAPS = {
    gconly: 'groupOnly',
    autodownload: 'autoDownload',
    onlinestatus: 'onlineStatus',
+   rejectcall: 'rejectCall',
    slowmode: 'slowMode'
 }
 
@@ -28,6 +29,7 @@ const PRETTY_SETTING_MAPS = {
    gconly: 'Group Only',
    autodownload: 'Auto Download',
    onlinestatus: 'Online Status',
+   rejectcall: 'Reject Call',
    slowmode: 'Slow Mode'
 }
 
@@ -110,7 +112,7 @@ const atomicWrite = async (db, store) =>
    ])
 
 export default {
-   command: ['autodownload', 'backup', 'backupsc', 'disable', 'enable', 'gconly', 'onlinestatus', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', '+prefix', '-prefix'],
+   command: ['autodownload', 'backup', 'backupsc', 'disable', 'enable', 'gconly', 'onlinestatus', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', '+prefix', '-prefix'],
    category: 'owner',
    async run (m, {
       sock,
@@ -171,6 +173,7 @@ export default {
          command === 'gconly' ||
          command === 'autodownload' ||
          command === 'onlinestatus' ||
+         command === 'rejectcall' ||
          command === 'slowmode'
       ) {
          const [option] = args

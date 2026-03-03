@@ -21,7 +21,9 @@ export default {
          })
          if (!Buffer.isBuffer(data))
             return m.reply('❌ Failed to get data.')
-         sock.sendMedia(m.chat, data, '', m, { sticker: true })
+         sock.sendMedia(m.chat, data, '', m, {
+            sticker: true
+         })
       }
       catch (error) {
          console.error(error)

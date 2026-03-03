@@ -6,13 +6,14 @@ const URL_REGEX = /https?:\/\/[^\s]+?(?=[\s]|$)/
 
 export default {
    async run(m, {
+      sock,
       user,
       setting,
-      sock,
+      isPartner,
       body
    }) {
       if (!setting.autoDownload || !isURL(body)) return
-      if (user.limit > 0)
+      if (user.limit > 0 && !isPartner)
          user.limit -= 1
       else
          return m.reply(`⚠️ Your limit is not enough to use auto download, try \`${setting.prefixes[0]}claim\` command to claim limit.`)
