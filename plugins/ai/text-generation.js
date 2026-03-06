@@ -1,7 +1,7 @@
 import { nexray } from '../../lib/Request.js'
 
 export default {
-   command: ['ai', 'copilot', 'deepsearch', 'dgaf', 'dolphin', 'dreamanalyze', 'gita', 'glm', 'hammer', 'nexray', 'perplexity'],
+   command: ['ai', 'claude', 'copilot', 'deepsearch', 'deepseek', 'dgaf', 'dolphin', 'dreamanalyze', 'gita', 'glm', 'hammer', 'nexray', 'perplexity'],
    category: 'ai',
    async run(m, {
       sock,
@@ -13,11 +13,12 @@ export default {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} hello`)
          m.react('🕒')
-         const path = command === 'ai' ?
-            'asisten' :
-            command === 'gita' ?
-               'gitagpt' :
-               command
+         const path =
+            command === 'ai' ?
+               'chatgpt' :
+               command === 'gita' ?
+                  'gitagpt' :
+                  command
          const params = { text }
          if (command === 'dolphin')
             params.template = 'logical'
