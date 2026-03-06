@@ -28,6 +28,7 @@ export default {
       const printModeration = frame('MODERATION', [
          `*Auto Sticker*: ${group.autoSticker ? '✅' : '❌'}`,
          `*Anti Delete*: ${group.antiDelete ? '✅' : '❌'}`,
+         `*Anti Group Status*: ${group.antiGroupStatus ? '✅' : '❌'}`,
          `*Anti Link*: ${group.antiLink ? '✅' : '❌'}`,
          `*Anti Spam*: ${group.antiSpam ? '✅' : '❌'}`,
          `*Anti Tag Status*: ${group.antiTagStatus ? '✅' : '❌'}`,

@@ -1,3 +1,5 @@
+import { isJidNewsletter } from '@itsliaaa/baileys'
+
 import { nexray } from '../../lib/Request.js'
 import { isURL } from '../../lib/Utilities.js'
 
@@ -24,8 +26,10 @@ export default {
          })
          if (!data.status)
             return m.reply('❌ Failed to get data.')
+         const shouldAsAudio = command === 'ytmp3'
          sock.sendMedia(m.chat, data.result.url, data.result.title, m, {
-            audio: command === 'ytmp3'
+            audio: shouldAsAudio,
+            ptt: shouldAsAudio && isJidNewsletter(m.chat)
          })
       }
       catch (error) {

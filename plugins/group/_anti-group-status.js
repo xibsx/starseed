@@ -7,19 +7,22 @@ export default {
       sock,
       group,
       isPartner,
-      isAdmin
+      isAdmin,
    }) {
       if (
-         group.antiTagStatus &&
+         group.antiGroupStatus &&
          !isPartner &&
          !isAdmin &&
-         m.message.groupStatusMentionMessage
+         (
+            m.message.groupStatusMessage ||
+            m.message.groupStatusMessageV2
+         )
       ) {
          const participant = group.participants[m.sender]
          handleWarning(m, {
             sock,
             participant,
-            note: `3 warnings and you’ll be removed. No more status mention.`,
+            note: `3 warnings and you’ll be removed. No more sending group status.`,
             max: 3
          })
       }

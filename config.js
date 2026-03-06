@@ -36,6 +36,9 @@ Object.assign(global, {
    // Local timezone
    localTimezone: 'Asia/Jakarta',
 
+   // Bot thumbnail (optional, you can change it with setcover command)
+   botThumbnail: './lib/Media/thumbnail.jpg',
+
    // Auth state folder name (optional)
    authFolder: 'session',
 
@@ -51,9 +54,6 @@ Object.assign(global, {
    // Database file name (optional)
    databaseFilename: 'database.json',
 
-   // Bot thumbnail (optional, you can change it with setcover command)
-   botThumbnail: './lib/Media/thumbnail.jpg',
-
    // Interval to clean temporary files (ms)
    temporaryFileInterval: 1_800_000,
 
@@ -64,7 +64,7 @@ Object.assign(global, {
    requestTimeout: 60_000,
 
    // FFmpeg process timeout
-   ffmpegTimeout: 30_000,
+   ffmpegTimeout: 60_000,
 
    // RSS limit (mb)
    rssLimit: 400 * 1024 * 1024,

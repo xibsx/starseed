@@ -1,3 +1,5 @@
+import { isJidNewsletter } from '@itsliaaa/baileys'
+
 import { nexray } from '../../lib/Request.js'
 import { fetchAsBuffer } from '../../lib/Utilities.js'
 
@@ -21,6 +23,7 @@ export default {
             return m.reply('❌ Failed to get data.')
          sock.sendMedia(m.chat, data.result.download_url, '', m, {
             audio: true,
+            ptt: isJidNewsletter(m.chat),
             externalAdReply: {
                title: data.result.title,
                body: '✍🏻 Artist: ' + data.result.artist,

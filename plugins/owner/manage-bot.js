@@ -20,6 +20,7 @@ const MENU_STYLES = {
 const SETTING_MAPS = {
    gconly: 'groupOnly',
    autodownload: 'autoDownload',
+   noprefix: 'noPrefix',
    onlinestatus: 'onlineStatus',
    rejectcall: 'rejectCall',
    slowmode: 'slowMode'
@@ -28,6 +29,7 @@ const SETTING_MAPS = {
 const PRETTY_SETTING_MAPS = {
    gconly: 'Group Only',
    autodownload: 'Auto Download',
+   noprefix: 'No Prefix',
    onlinestatus: 'Online Status',
    rejectcall: 'Reject Call',
    slowmode: 'Slow Mode'
@@ -112,7 +114,7 @@ const atomicWrite = async (db, store) =>
    ])
 
 export default {
-   command: ['autodownload', 'backup', 'backupsc', 'disable', 'enable', 'gconly', 'onlinestatus', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', '+prefix', '-prefix'],
+   command: ['autodownload', 'backup', 'backupsc', 'disable', 'enable', 'gconly', 'noprefix', 'onlinestatus', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', '+prefix', '-prefix'],
    category: 'owner',
    async run (m, {
       sock,
@@ -127,6 +129,7 @@ export default {
       if (
          command === 'autodownload' ||
          command === 'gconly' ||
+         command === 'noprefix' ||
          command === 'onlinestatus' ||
          command === 'rejectcall' ||
          command === 'slowmode'

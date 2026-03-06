@@ -10,7 +10,6 @@ export default {
       isPartner,
       isAdmin
    }) {
-      return false
       if (
          group.viewOnceForwarder &&
          !isPartner &&

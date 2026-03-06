@@ -14,7 +14,7 @@ import './config.js'
 import './error.js'
 
 import { Boom } from '@hapi/boom'
-import { areJidsSameUser, delay, DisconnectReason, isLidUser, isJidGroup, isJidMetaAI, jidNormalizedUser, makeCacheableSignalKeyStore, makeWASocket, useMultiFileAuthState } from '@itsliaaa/baileys'
+import { areJidsSameUser, delay, DisconnectReason, isLidUser, isJidGroup, isJidMetaAI, jidNormalizedUser, makeCacheableSignalKeyStore, makeWASocket } from '@itsliaaa/baileys'
 import { mkdir, unlink, readdir } from 'fs/promises'
 import { join } from 'path'
 import pino from 'pino'
@@ -26,6 +26,7 @@ import { cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnigh
 import { CommandIndex, EventIndex, ModuleCache, scanDirectory } from './lib/Watcher.js'
 
 import AntiSpam from './lib/Components/AntiSpam.js'
+import AuthState from './lib/Components/AuthState.js'
 import SholatReminder from './lib/Components/SholatReminder.js'
 
 const detectSpam = AntiSpam()
@@ -41,7 +42,7 @@ let isRestarting = false,
    restartScore = 0
 
 const Connect = async (db, store) => {
-   const { state, saveCreds } = await useMultiFileAuthState(authFolder)
+   const { state, saveCreds } = await AuthState()
 
    const sock = makeWASocket({
       logger,
@@ -218,9 +219,9 @@ const Connect = async (db, store) => {
             store.setGroup(group.id, group)
    })
 
-   sock.ev.on('call', async (calls) => {
+   sock.ev.on('call', (calls) => {
       if (setting.rejectCall)
-         for (const call of calls) {
+         calls.forEach(async (call) => {
             let callFrom = call.callerPn || call.from
             if (isLidUser(callFrom)) {
                const result = await sock.findUserId(callFrom)
@@ -233,18 +234,17 @@ const Connect = async (db, store) => {
 
                await sock.rejectCall(call.id, call.from)
 
-               if (callFrom.startsWith(ownerNumber)) continue
+               if (callFrom.startsWith(ownerNumber)) return
 
                ++userData.callAttempt
                if (userData.callAttempt >= 3) {
                   await sock.sendText(callFrom, '⚠️ You have called multiple times. Your account will now be blocked.')
-                  await sock.updateBlockStatus(callFrom, 'block')
-                  continue
+                  return sock.updateBlockStatus(callFrom, 'block')
                }
 
                await sock.sendText(callFrom, '⚠️ Do not call again, or you will be blocked.')
             }
-         }
+         })
    })
 
    sock.ev.on('group-participants.update', async ({ id, author, participants, action }) => {
@@ -253,7 +253,7 @@ const Connect = async (db, store) => {
       const group = db.getGroup(id)
       const isMuted = group.mute
 
-      for (const participant of participants) {
+      participants.forEach(async (participant) => {
          let userId = participant.phoneNumber
          if (isLidUser(author)) {
             const result = await sock.findUserId(author)
@@ -322,56 +322,57 @@ const Connect = async (db, store) => {
             }
          }
          store.setGroup(id, metadata)
-      }
+      })
    })
 
-   sock.ev.on('presence.update', async ({ id, presences }) => {
-      for (const presence in presences) {
-         if (isJidGroup(presence)) continue
+   sock.ev.on('presence.update', ({ id, presences }) => {
+      Object.keys(presences)
+         .forEach(async (presence) => {
+            if (isJidGroup(presence)) return
 
-         const userId = await sock.findUserId(presence)
-         if (!userId.phoneNumber ||
-            areJidsSameUser(
-               sock.user.decodedId,
-               userId.phoneNumber
-            )
-         ) continue
+            const userId = await sock.findUserId(presence)
+            if (!userId.phoneNumber ||
+               areJidsSameUser(
+                  sock.user.decodedId,
+                  userId.phoneNumber
+               )
+            ) return
 
-         const userData = db.getUser(userId.phoneNumber)
-         if (!userData) continue
+            const userData = db.getUser(userId.phoneNumber)
+            if (!userData) return
 
-         const condition = presences[presence]
-         if (
-            (
-               condition.lastKnownPresence === 'composing' ||
-               condition.lastKnownPresence === 'recording'
-            ) &&
-            !isEmptyObject(userData.afkContext)
-         ) {
-            const print = frame('HELLO', [
-               `💭 System detects activity from @${userData.jid.split('@')[0]} after being offline for: ${toTime(Date.now() - userData.afkTimestamp)}`,
-               `🏷️ *Reason*: ${userData.afkReason || '-'}`
-            ], '👀')
-            await sock.sendText(id, print, userData.afkContext)
-            userData.afkReason = ''
-            userData.afkContext = {}
-            userData.afkTimestamp = -1
-         }
-      }
+            const condition = presences[presence]
+            if (
+               (
+                  condition.lastKnownPresence === 'composing' ||
+                  condition.lastKnownPresence === 'recording'
+               ) &&
+               !isEmptyObject(userData.afkContext)
+            ) {
+               const print = frame('HELLO', [
+                  `💭 System detects activity from @${userData.jid.split('@')[0]} after being offline for: ${toTime(Date.now() - userData.afkTimestamp)}`,
+                  `🏷️ *Reason*: ${userData.afkReason || '-'}`
+               ], '👀')
+               await sock.sendText(id, print, userData.afkContext)
+               userData.afkReason = ''
+               userData.afkContext = {}
+               userData.afkTimestamp = -1
+            }
+         })
    })
 
-   sock.ev.on('messages.upsert', async ({ messages }) => {
+   sock.ev.on('messages.upsert', ({ messages }) => {
       setting = db.getSetting()
 
       const timestampMs = Date.now()
       const timestampSec = timestampMs / 1000
 
-      for (const message of messages) {
-         if (!message.message || timestampSec - message.messageTimestamp > 60) continue
+      messages.forEach(async (message) => {
+         if (!message.message || timestampSec - message.messageTimestamp > 60) return
 
          Serialize(sock, message)
 
-         if (!message.type || store.hasMessage(message)) continue
+         if (!message.type || store.hasMessage(message)) return
 
          let groupMetadata = store.getGroup(message.chat)
 
@@ -414,7 +415,7 @@ const Connect = async (db, store) => {
 
          StickerCommand(message, setting.stickerCommand)
 
-         const {
+         let {
             body,
             prefix: isPrefix,
             command,
@@ -428,7 +429,7 @@ const Connect = async (db, store) => {
          if (message.isMe) {
             setting.messageEgress++
             setting.byteEgress += fileSize
-            continue
+            return
          }
          else {
             setting.messageIngress++
@@ -496,76 +497,56 @@ const Connect = async (db, store) => {
 
             if (isSpam) {
                await message.reply('⚠️ You should be removed for spamming.')
-               sock.groupParticipantsUpdate(message.chat, [message.sender], 'remove')
-               continue
+               return sock.groupParticipantsUpdate(message.chat, [message.sender], 'remove')
             }
          }
 
-         if (setting.self && !isPartner) continue
+         if (setting.self && !isPartner) return
 
-         if (setting.groupOnly && message.isPrivate && !isPartner) continue
+         if (setting.groupOnly && message.isPrivate && !isPartner) return
 
-         if (message.isGroup && group.mute && command !== 'unmute') continue
+         if (message.isGroup && group.adminOnly && !isAdmin) return
 
-         if (message.isGroup && group.adminOnly && !isAdmin) continue
+         const hasPrefix = setting.prefixes.includes(isPrefix)
+         if (!hasPrefix) {
+            command = isPrefix + command
+            isPrefix = ''
+         }
 
-         if (setting.prefixes.includes(isPrefix)) {
-            const plugin = CommandIndex.get(command)
+         if (message.isGroup && group.mute && command !== 'unmute') return
 
-            if (!plugin?.run) {
-               const suggestions = findTopSuggestions(command)
-               if (suggestions.length) {
-                  const print = frame('DID YOU MEAN', suggestions.map(suggestion => `${isPrefix + suggestion.command} (${suggestion.similarity.toFixed(0)}%)`), '🔍')
-                  message.reply(print)
-               }
-               continue
-            }
+         let plugin = null
+         if (hasPrefix || setting.noPrefix)
+            plugin = CommandIndex.get(command)
 
-            if (isBanned) {
-               message.reply('⚠️ You are being banned by BOT staff.')
-               continue
-            }
+         if (plugin) {
+            if (isBanned)
+               return message.reply('⚠️ You are being banned by BOT staff.')
 
-            if (setting.disabledCommand.includes(command)) {
-               message.reply('❌ This feature is currently disabled.')
-               continue
-            }
+            if (setting.disabledCommand.includes(command))
+               return message.reply('❌ This feature is currently disabled.')
 
-            if (plugin.owner && !isOwner) {
-               message.reply('⚠️ This command only for owner.')
-               continue
-            }
+            if (plugin.owner && !isOwner)
+               return message.reply('⚠️ This command only for owner.')
 
-            if (plugin.partner && !isPartner) {
-               message.reply('⚠️ This command only for partner.')
-               continue
-            }
+            if (plugin.partner && !isPartner)
+               return message.reply('⚠️ This command only for partner.')
 
-            if (plugin.group && !message.isGroup) {
-               message.reply('⚠️ This command will only work in group.')
-               continue
-            }
+            if (plugin.group && !message.isGroup)
+               return message.reply('⚠️ This command will only work in group.')
 
-            if (plugin.private && !message.isPrivate) {
-               message.reply('⚠️ This command will only work in private chat.')
-               continue
-            }
+            if (plugin.private && !message.isPrivate)
+               return message.reply('⚠️ This command will only work in private chat.')
 
-            if (plugin.admin && !isAdmin) {
-               message.reply('⚠️ This command only for group admin.')
-               continue
-            }
+            if (plugin.admin && !isAdmin)
+               return message.reply('⚠️ This command only for group admin.')
 
-            if (plugin.botAdmin && !isBotAdmin) {
-               message.reply('⚠️ This command will work when bot become an admin.')
-               continue
-            }
+            if (plugin.botAdmin && !isBotAdmin)
+               return message.reply('⚠️ This command will work when bot become an admin.')
 
             if (plugin.limit && !isPartner) {
-               if (user.limit < 1) {
-                  message.reply(`⚠️ You reached the limit and will be reset at 00.00 or try \`${isPrefix}claim\` command to claim limit.`)
-                  continue
-               }
+               if (user.limit < 1)
+                  return message.reply(`⚠️ You reached the limit and will be reset at 00.00 or try \`${isPrefix}claim\` command to claim limit.`)
 
                const limitCost =
                   plugin.limit === true ?
@@ -576,10 +557,8 @@ const Connect = async (db, store) => {
 
                if (user.limit >= limitCost)
                   user.limit -= limitCost
-               else {
-                  message.reply(`⚠️ Your limit is not enough to use this feature, try \`${isPrefix}claim\` command to claim limit.`)
-                  continue
-               }
+               else
+                  return message.reply(`⚠️ Your limit is not enough to use this feature, try \`${isPrefix}claim\` command to claim limit.`)
             }
 
             user.commandUsage++
@@ -604,7 +583,15 @@ const Connect = async (db, store) => {
                args
             })
          }
-         else
+         else {
+            const suggestions = findTopSuggestions(command)
+            if (suggestions.length) {
+               const printSuggestions = frame('DID YOU MEAN', suggestions.map(suggestion =>
+                  `${isPrefix + suggestion.command} (${suggestion.similarity.toFixed(0)}%)`
+               ), '🔍')
+               return message.reply(printSuggestions)
+            }
+
             for (const event of EventIndex) {
                if (!event?.run) continue
 
@@ -642,7 +629,8 @@ const Connect = async (db, store) => {
                   args
                })
             }
-      }
+         }
+      })
    })
 
    if (isEmptyObject(setting))

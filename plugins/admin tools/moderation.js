@@ -1,6 +1,7 @@
 const MODERATION_MAPS = {
    adminonly: 'adminOnly',
    antidelete: 'antiDelete',
+   antigroupstatus: 'antiGroupStatus',
    antilink: 'antiLink',
    antispam: 'antiSpam',
    antitagstatus: 'antiTagStatus',
@@ -14,6 +15,7 @@ const MODERATION_MAPS = {
 const PRETTY_MODERATION_MAPS = {
    adminonly: 'Admin Only',
    antidelete: 'Anti Delete',
+   antigroupstatus: 'Anti Group Status',
    antilink: 'Anti Link',
    antispam: 'Anti Spam',
    antitagstatus: 'Anti Tag Status',
@@ -27,7 +29,7 @@ const PRETTY_MODERATION_MAPS = {
 }
 
 export default {
-   command: ['adminonly', 'antidelete', 'antilink', 'antispam', 'antitagstatus', 'antitoxic', 'antiwalink', 'autosticker', 'sholatreminder', 'left', 'welcome'],
+   command: ['adminonly', 'antidelete', 'antigroupstatus', 'antilink', 'antispam', 'antitagstatus', 'antitoxic', 'antiwalink', 'autosticker', 'sholatreminder', 'left', 'welcome'],
    category: 'admin tools',
    async run(m, {
       group,
