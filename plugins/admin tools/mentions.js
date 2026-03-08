@@ -10,17 +10,11 @@ export default {
       groupMetadata
    }) {
       const q = m.quoted ? m.quoted : m
-      const body = text ?? q.body
+      const body = text || q.body
       const mimetype = (q.msg || q).mimetype
       const media = mimetype ? await q.download() : null
-      const mentions = groupMetadata.participants.map(participant => participant.id)
       const options = {
-         mentions,
-         ...(mimetype && {
-            audio: isMimeAudio(mimetype),
-            ptt: q.ptt,
-            sticker: isMimeWebP(mimetype)
-         })
+         mentionAll: true
       }
       let printBody = body
       if (command === 'everyone') {
@@ -39,9 +33,14 @@ export default {
          printBody += frame('PARTICIPANTS', groupMetadata.participants.map(participant =>
             `@${participant.phoneNumber.split('@')[0]}`
          ), '👤')
+         options.mentionAll = false
       }
-      if (mimetype)
+      if (mimetype) {
+         options.audio = isMimeAudio(mimetype)
+         options.ptt = q.ptt
+         options.sticker = isMimeWebP(mimetype)
          sock.sendMedia(m.chat, media, printBody, null, options)
+      }
       else
          sock.sendText(m.chat, printBody, null, options)
    },

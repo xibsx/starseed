@@ -1,6 +1,6 @@
 {
    "name": "@itsliaaa/starseed",
-   "version": "0.2.0-beta.8",
+   "version": "0.2.0-beta.9",
    "description": "A simple WhatsApp bot built on Baileys",
    "main": "index.js",
    "type": "module",
@@ -25,12 +25,12 @@
    "author": "Lia Wynn",
    "license": "Apache-2.0",
    "dependencies": {
-      "@itsliaaa/baileys": "^0.1.1",
+      "@itsliaaa/baileys": "^0.1.3",
+      "@napi-rs/image": "^1.12.0",
       "awesome-phonenumber": "2.59.0",
       "cfonts": "~3.3.1",
       "cheerio": "~1.2.0",
       "file-type": "^21.3.0",
-      "jimp": "1.6.0",
       "qrcode": "1.5.4"
    },
    "packageManager": "yarn@1.22.22"

@@ -29,6 +29,7 @@ export default {
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} Starseed`)
          if (text.length > 100)
             return m.reply('❌ Max characters for newsletter name is 100.')
+         m.react('🕒')
          await sock.newsletterUpdateName(setting.newsletterId, text)
          m.reply('✅ Successfully change the newsletter name.')
       }
@@ -37,6 +38,7 @@ export default {
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} Weekly fresh updates`)
          if (text.length > 1000)
             return m.reply('❌ Max characters for newsletter description is 1000.')
+         m.react('🕒')
          await sock.newsletterUpdateDescription(setting.newsletterId, text)
          m.reply('✅ Successfully change the newsletter description.')
       }
@@ -45,6 +47,7 @@ export default {
          const mimetype = (q.msg || q).mimetype
          if (!isMimeImage(mimetype))
             return m.reply('💭 Provide an image to change newsletter picture.')
+         m.react('🕒')
          await sock.newsletterUpdatePicture(setting.newsletterId, await q.download())
          m.reply('✅ Successfully changed.')
       }

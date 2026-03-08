@@ -4,7 +4,7 @@ import { createWriteStream, createReadStream } from 'fs'
 import { readdir, rename } from 'fs/promises'
 import { basename, join, relative, resolve } from 'path'
 
-import { createFileName, isMimeImage, persistToFile, toArray } from '../../lib/Utilities.js'
+import { createFileName, downscaleImage, isMimeImage, persistToFile, toArray } from '../../lib/Utilities.js'
 import { ModuleCache } from '../../lib/Watcher.js'
 
 const MENU_STYLES = {
@@ -222,8 +222,10 @@ export default {
       }
       else if (command === 'setbroadcastcd') {
          const value = Number(args[0])
-         if (!value)
+         if (!Number.isFinite(value))
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} 10000`)
+         if (value < 1000)
+            return m.reply('❌ Cooldown is too short.')
          setting.broadcastCooldown = value
          m.reply(`✅ Successfully set broadcast cooldown to *${value}* ms.`)
       }
@@ -271,7 +273,9 @@ export default {
          const buffer = await q.download()
          if (!Buffer.isBuffer(buffer))
             return m.reply('❌ Failed to download media.')
-         const filePath = await persistToFile(buffer)
+         const filePath = await persistToFile(
+            await downscaleImage(buffer, 720)
+         )
          await rename(filePath,
             join('lib', 'Media', 'thumbnail.jpg')
          )

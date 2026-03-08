@@ -20,7 +20,8 @@ export default {
          })
          if (!data.status)
             return m.reply('❌ Failed to get data.')
-         const album = shuffleArray(data.result).splice(0, 3)
+         const album = shuffleArray(data.result)
+            .splice(0, 3)
          sock.sendMessage(m.chat, {
             album: album.map((media) => ({
                [media.type]: {
