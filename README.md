@@ -91,7 +91,7 @@ Object.assign(global, {
    // [IMPORTANT] Bot phone number for pairing code
    botNumber: '628111111',
 
-   // Pairing using code method (set to false to use QR)
+   // Pairing using code method (set to true for pairing code, false for QR pairing)
    pairingCode: false,
 
    // User default limit (used for reset too)
@@ -105,7 +105,10 @@ Object.assign(global, {
 
    // ********** API KEYS ********** //
 
-   // [IMPORTANT] SightEngine for Anti Porn --- https://sightengine.com/
+   // Google AI Studio for Chat Bot @ https://aistudio.google.com/
+   googleApiKey: '',
+
+   // SightEngine for Anti Porn @ https://sightengine.com/
    apiUser: '',
    apiSecret: '',
 
@@ -146,6 +149,10 @@ Starseed is an independent project built and maintained by:
 
 - [itsliaaa](https://github.com/itsliaaa) — Project Maintainer & Creator
 
+Support this project:
+
+- [Saweria](https://saweria.co/itsliaaa)
+
 #### 🌐 Third-Party Services
 
 Starseed utilizes the following external APIs:
@@ -165,9 +172,3 @@ Special thanks to:
 - And of course… **You** ✨
 
 Your feedback and support help this project continue to grow 🌱
-
-#### 💰 Donate
-
-Support this project:
-
-- [Saweria](https://saweria.co/itsliaaa)

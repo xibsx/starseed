@@ -1,5 +1,5 @@
 import { nekolabs } from '../../lib/Request.js'
-import { downscaleImage } from '../../lib/Utilities.js'
+import { resizeImage } from '../../lib/Utilities.js'
 
 export default {
    command: ['animagine', 'cartoony', 'dreamshaper', 'newreality'],
@@ -27,9 +27,9 @@ export default {
          })
          if (!data.success)
             return m.reply('❌ Failed to get data.')
-         const buffer = await downscaleImage(
+         const buffer = await resizeImage(
             data.result,
-            720, -1, 100
+            720, null
          )
          sock.sendMedia(m.chat, buffer, '', m)
       }

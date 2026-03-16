@@ -14,6 +14,8 @@ export default {
       try {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} hello`)
+         if (text.length > 150)
+            return m.reply('❌ Maximum 150 characters.')
          m.react('🕒')
          const profilePicture = await sock.profilePicture(m.sender)
          const upload = await uguu(

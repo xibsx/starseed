@@ -4,10 +4,13 @@ import { createWriteStream, createReadStream } from 'fs'
 import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'fs/promises'
 import { basename, dirname, join, relative, resolve } from 'path'
 
-import { createFileName, downscaleImage, isMimeImage, persistToFile, toArray } from '../../lib/Utilities.js'
+import { AVAILABLE_MODELS } from '../../lib/Constants.js'
+import { createFileName, frame, isMimeImage, persistToFile, resizeImage, toArray } from '../../lib/Utilities.js'
 import { ModuleCache } from '../../lib/Watcher.js'
 
 const TOP_PATH = 'starseed-main/'
+
+const HIGHLIGHT_LABEL = { highlight_label: 'Subscription Only' }
 
 const MENU_STYLES = {
    1: '🌱 `Extended Text Message` with `externalAdReply`.',
@@ -24,9 +27,11 @@ const SETTING_MAPS = {
    gconly: 'groupOnly',
    afknotifier: 'afkNotifier',
    autodownload: 'autoDownload',
+   chatbot: 'chatBot',
    commandsuggestion: 'commandSuggestions',
    noprefix: 'noPrefix',
    onlinestatus: 'onlineStatus',
+   reactstatus: 'reactStatus',
    rejectcall: 'rejectCall',
    slowmode: 'slowMode'
 }
@@ -35,9 +40,11 @@ const PRETTY_SETTING_MAPS = {
    gconly: 'Group Only',
    afknotifier: 'AFK Notifier',
    autodownload: 'Auto Download',
+   chatbot: 'Chat Bot',
    commandsuggestion: 'Command Suggestions',
    noprefix: 'No Prefix',
    onlinestatus: 'Online Status',
+   reactStatus: 'React Status',
    rejectcall: 'Reject Call',
    slowmode: 'Slow Mode'
 }
@@ -162,7 +169,7 @@ const atomicWrite = (db, store) =>
    ])
 
 export default {
-   command: ['afknotifier', 'autodownload', 'backup', 'backupsc', 'commandsuggestion', 'disable', 'enable', 'gconly', 'noprefix', 'onlinestatus', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setmenu', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', 'updatesc', '+prefix', '-prefix'],
+   command: ['afknotifier', 'autodownload', 'backup', 'backupsc', 'chatbot', 'commandsuggestion', 'disable', 'enable', 'gconly', 'noprefix', 'onlinestatus', 'reactstatus', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setinstruction', 'setmenu', 'setmenumessage', 'setmodel', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', 'updatesc', '+prefix', '-prefix'],
    category: 'owner',
    async run (m, {
       sock,
@@ -177,10 +184,12 @@ export default {
       if (
          command === 'afknotifier' ||
          command === 'autodownload' ||
+         command === 'chatbot' ||
          command === 'commandsuggestion' ||
          command === 'gconly' ||
          command === 'noprefix' ||
          command === 'onlinestatus' ||
+         command === 'reactstatus' ||
          command === 'rejectcall' ||
          command === 'slowmode'
       ) {
@@ -189,6 +198,8 @@ export default {
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} on`)
          if (option !== 'on' && option !== 'off')
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} on`)
+         if (command === 'chatbot' && (!googleApiKey || !setting.botModel))
+            return m.reply(`❌ Chat Bot feature is currently unavailable. Please set \`googleApiKey\` in \`config.js\` and choose a model using the \`${isPrefix}setmodel\` command first.`)
          const isActivating = option === 'on'
          const keySetting = SETTING_MAPS[command] || command
          const prettyKeyName = PRETTY_SETTING_MAPS[command]
@@ -258,6 +269,7 @@ export default {
       else if (command === 'restart') {
          await m.reply('🔃 Restarting...')
          await atomicWrite(db, store)
+         await sock.end()
          process.send('reset')
       }
       else if (command === 'restore') {
@@ -279,6 +291,12 @@ export default {
          setting.broadcastCooldown = value
          m.reply(`✅ Successfully set broadcast cooldown to *${value}* ms.`)
       }
+      else if (command === 'setinstruction') {
+         if (!text)
+            return m.reply(`👉🏻 *Example*: ${isPrefix + command} You're Starseed AI, developed and maintained by Starfall Co. Ltd.`)
+         setting.botInstruction = text
+         m.reply(`✅ Successfully set bot instruction.`)
+      }
       else if (command === 'setmenu') {
          if (!args.length)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} 1`)
@@ -289,11 +307,49 @@ export default {
          m.reply('✅ Successfully set menu style.' +
             '\n\n> ' + selected)
       }
+      else if (command === 'setmenumessage') {
+         if (!text)
+            return m.reply(`👉🏻 *Example*: ${isPrefix + command} Hello +tag (+name) +greeting 👋🏻`)
+         setting.menuMessage = text
+         m.reply('✅ Successfully set menu message.')
+      }
+      else if (command === 'setmodel') {
+         if (!text.includes('--model')) {
+            const printMessage = frame('AI MODELS', [
+               `Choose a model`
+            ], '👾')
+            return sock.sendMessage(m.chat, {
+               text: printMessage,
+               footer,
+               nativeFlow: [{
+                  text: '📄 List Model',
+                  sections: Object.entries(AVAILABLE_MODELS)
+                     .map(([key, value]) => ({
+                        ...(value.subscriptionOnly ? HIGHLIGHT_LABEL : {}),
+                        rows: [{
+                           title: key,
+                           description: value.description,
+                           id: `${isPrefix + command} --model ${key}`
+                        }]
+                     }))
+               }]
+            }, {
+               quoted: m
+            })
+         }
+         if (!googleApiKey)
+            return m.reply('❌ Google API key is missing. Please configure `googleApiKey` in `config.js` first.')
+         const model = args[1]
+         if (!(model in AVAILABLE_MODELS))
+            return m.reply(`❌ Model "${model}" not found.`)
+         setting.botModel = model
+         m.reply('✅ Successfully set bot model.')
+      }
       else if (command === 'setname') {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} Starseed`)
          if (text.length > 25)
-            return m.reply('❌ Max characters for profile name is 25.')
+            return m.reply('❌ Maximum 25 characters.')
          await sock.updateProfileName(text)
          m.reply('✅ Successfully change the profile name.')
       }
@@ -301,7 +357,7 @@ export default {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} WhatsApp Automation`)
          if (text.length > 50)
-            return m.reply('❌ Max characters for profile bio is 50.')
+            return m.reply('❌ Maximum 50 characters.')
          await sock.updateProfileStatus(text)
          m.reply('✅ Successfully change the profile bio.')
       }
@@ -324,7 +380,7 @@ export default {
          if (!Buffer.isBuffer(buffer))
             return m.reply('❌ Failed to download media.')
          const filePath = await persistToFile(
-            await downscaleImage(buffer, 720)
+            await resizeImage(buffer, 720)
          )
          await rename(filePath,
             join('lib', 'Media', 'thumbnail.jpg')

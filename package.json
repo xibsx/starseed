@@ -1,12 +1,12 @@
 {
    "name": "@itsliaaa/starseed",
-   "version": "0.2.0-beta.13",
+   "version": "0.2.0-beta.14",
    "description": "A simple WhatsApp bot built on Baileys",
    "main": "index.js",
    "type": "module",
    "scripts": {
-      "start": "NODE_ENV=production node --max-old-space-size=320 index.js",
-      "start:smol": "NODE_ENV=production node --max-old-space-size=128 --max-semi-space-size=1 --optimize-for-size --expose-gc index.js"
+      "start": "NODE_ENV=production node --max-old-space-size=288 index.js",
+      "start:smol": "NODE_ENV=production node --max-old-space-size=144 --max-semi-space-size=1 --optimize-for-size --expose-gc index.js"
    },
    "engines": {
       "node": ">=20.0.0"
@@ -17,6 +17,7 @@
    },
    "keywords": [
       "base",
+      "baileys",
       "bot",
       "whatsapp",
       "whatsapp-bot",
@@ -26,12 +27,12 @@
    "author": "Lia Wynn",
    "license": "Apache-2.0",
    "dependencies": {
-      "@itsliaaa/baileys": "~0.1.5",
+      "@itsliaaa/baileys": "^0.1.8",
       "@napi-rs/image": "^1.12.0",
       "awesome-phonenumber": "2.59.0",
       "cfonts": "~3.3.1",
       "cheerio": "~1.2.0",
-      "file-type": "^21.3.0",
+      "file-type": "^21.3.2",
       "qrcode": "1.5.4"
    },
    "packageManager": "yarn@1.22.22"

@@ -44,7 +44,7 @@ export default {
       }
       else if (command === 'ban') {
          if (user.banned)
-            m.reply('❌ User already banned.')
+            return m.reply('❌ User already banned.')
          user.banned = true
          m.reply('✅ Successfully ban user.')
       }
@@ -54,7 +54,7 @@ export default {
       }
       else if (command === 'unban') {
          if (!user.banned)
-            m.reply('❌ User already unbanned.')
+            return m.reply('❌ User already unbanned.')
          user.banned = false
          m.reply('✅ Successfully unban user.')
       }

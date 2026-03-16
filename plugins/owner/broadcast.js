@@ -1,13 +1,13 @@
 import { delay, isPnUser } from '@itsliaaa/baileys'
 
 import { FAKE_QUOTE } from '../../lib/Constants.js'
-import { fetchAsBuffer, frame, greeting, isMimeWebP } from '../../lib/Utilities.js'
+import { fetchAsBuffer, frame, greeting, isMimeWebP, randomHex } from '../../lib/Utilities.js'
 
 const DEFAULT_BROADCAST_COOLDOWN = 10000
 
 export default {
-   command: ['broadcast', 'broadcastgc'],
-   hidden: ['bc', 'bcgc', 'jpm'],
+   command: ['broadcast', 'broadcastgc', 'broadcastgcsw'],
+   hidden: ['bc', 'bcgc', 'bcgcsw', 'jpm'],
    category: 'owner',
    async run(m, {
       db,
@@ -28,8 +28,9 @@ export default {
             command === 'bc' ||
             command === 'jpm'
          const isGroup = command === 'broadcastgc' || command === 'bcgc'
+         const isGroupStatus = command === 'broadcastgcsw' || command === 'bcgcsw'
          const bufferMedia = await q.download?.()
-         const printBody = frame('BROADCAST', body.split(/\r?\n/), '📣')
+         const printBody = isGroupStatus ? body : frame('BROADCAST', body.split(/\r?\n/), '📣')
          const ids = []
          if (isPrivate) {
             const alreadyInside = new Set()
@@ -47,7 +48,7 @@ export default {
                }
             }
          }
-         else if (isGroup)
+         else if (isGroup || isGroupStatus)
             for (const id of store.groupMetadata.keys())
                ids.push(id)
          else
@@ -60,6 +61,7 @@ export default {
             if (bufferMedia)
                await sock.sendMedia(id, bufferMedia, printBody, FAKE_QUOTE, {
                   sticker: isMimeWebP(mimetype),
+                  groupStatus: isGroupStatus,
                   mentionAll: true,
                   contextInfo: {
                      isForwarded: true,
@@ -68,6 +70,7 @@ export default {
                })
             else
                await sock.sendText(id, printBody, FAKE_QUOTE, {
+                  groupStatus: isGroupStatus,
                   mentionAll: true,
                   contextInfo: {
                      isForwarded: true,
@@ -79,6 +82,8 @@ export default {
                      thumbnail: await fetchAsBuffer('./lib/Media/broadcast.jpg'),
                      largeThumbnail: true
                   }
+               }, {
+                  backgroundColor: randomHex()
                })
             await delay(broadcastCooldown)
          }

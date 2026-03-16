@@ -1,4 +1,4 @@
-import { nexray } from '../../lib/Request.js'
+import { faa } from '../../lib/Request.js'
 import { uguu } from '../../lib/Scraper.js'
 import { isMimeImage } from '../../lib/Utilities.js'
 
@@ -23,7 +23,7 @@ export default {
          const upload = await uguu(
             await q.download()
          )
-         const data = await nexray('maker/smeme', {
+         const data = await faa('smeme', {
             text_atas: top,
             text_bawah: bottom,
             background: upload

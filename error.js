@@ -75,12 +75,10 @@ process.on('warning', (warning) => {
 })
 
 process.on('uncaughtException', (error) => {
-   if (error?.code === 'ENOMEM') {
-      console.error('❌ Out of memory')
-   }
-   else {
+   if (error?.code === 'ENOMEM')
+      console.error('❌ Out of memory, restarting...')
+   else
       console.error('❌ Uncaught Exception', ':', error)
-   }
 
    process.exit(1)
 })
@@ -88,7 +86,7 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason) => {
    const message = String(reason?.message || reason || '')
 
-   if (REJECTION_IGNORE.some(p => message.includes(p))) return
+   if (REJECTION_IGNORE.some(condition => message.includes(condition))) return
 
    console.error('❌ Unhandled Rejection', ':', reason)
    process.exit(1)

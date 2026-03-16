@@ -14,15 +14,15 @@ import './config.js'
 import './error.js'
 
 import { Boom } from '@hapi/boom'
-import { areJidsSameUser, delay, DisconnectReason, isLidUser, isJidGroup, isJidMetaAI, jidNormalizedUser, makeCacheableSignalKeyStore, makeWASocket, useMultiFileAuthState } from '@itsliaaa/baileys'
+import { areJidsSameUser, Browsers, delay, DisconnectReason, isLidUser, isJidGroup, isJidMetaAI, jidNormalizedUser, makeCacheableSignalKeyStore, makeWASocket, useMultiFileAuthState } from '@itsliaaa/baileys'
 import { mkdir, unlink, readdir, stat } from 'fs/promises'
 import { join } from 'path'
 import pino from 'pino'
 
-import { INACTIVE_THRESHOLD, SCHEMA, TEMP_THRESHOLD } from './lib/Constants.js'
+import { INACTIVE_THRESHOLD, SCHEMA, STATUS_REACTIONS, TEMP_THRESHOLD } from './lib/Constants.js'
 import { Database, Store } from './lib/Database.js'
 import { Serialize, shouldUpdatePresence, StickerCommand } from './lib/Serialize.js'
-import { cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, messageLogger, randomInteger, Sender, toTime } from './lib/Utilities.js'
+import { cleanUpFolder, fetchAsBuffer, findTopSuggestions, frame, getNextMidnight, greeting, isEmptyObject, messageLogger, randomInteger, randomValue, Sender, toTime } from './lib/Utilities.js'
 import { CommandIndex, EventIndex, ModuleCache, scanDirectory } from './lib/Watcher.js'
 
 import SholatReminder from './lib/Components/SholatReminder.js'
@@ -93,7 +93,7 @@ const Connect = async () => {
             process.exit(0)
          }
 
-         await delay(1500)
+         await delay(2000)
 
          const code = await sock.requestPairingCode(
             phoneNumber.getNumber('e164')
@@ -154,7 +154,7 @@ const Connect = async () => {
                console.error('❌ Connection lost with unknown reason', ':', reason)
          }
 
-         if (restartScore >= 3) {
+         if (restartScore > 4) {
             console.log('❌ The socket had to be stopped due to an unstable connection.')
 
             process.exit(0)
@@ -166,6 +166,8 @@ const Connect = async () => {
             sock.ws.close()
          }
          catch { }
+
+         await delay(3000)
 
          isRestarting = false
          return Connect()
@@ -242,10 +244,12 @@ const Connect = async () => {
 
                await sock.rejectCall(call.id, call.from)
 
-               if (!userData || callFrom.startsWith(ownerNumber)) return
+               if (
+                  !userData ||
+                  callFrom.startsWith(ownerNumber)
+               ) return
 
-               ++userData.callAttempt
-               if (userData.callAttempt >= 3) {
+               if (++userData.callAttempt >= 3) {
                   await sock.sendText(callFrom, '⚠️ You have called multiple times. Your account will now be blocked.')
                   return sock.updateBlockStatus(callFrom, 'block')
                }
@@ -422,8 +426,15 @@ const Connect = async () => {
 
             db.updateUser(message.sender, user)
          }
-         else
-            user.name = message.pushName
+
+         if (!user.jid)
+            user.jid = message.sender
+
+         if (!user.lid)
+            user.lid = message.senderLid
+
+         user.name = message.pushName
+         user.lastSeen = timestampMs
 
          if (message.isGroup) {
             if (!groupMetadata?.participants) {
@@ -440,8 +451,31 @@ const Connect = async () => {
 
                db.updateGroup(message.chat, group)
             }
+
+            group.name = groupMetadata.subject
+            group.lastActivity = timestampMs
+
+            if (group.participants[message.sender]) {
+               group.participants[message.sender].messages++
+               group.participants[message.sender].lastSeen = timestampMs
+            }
             else
-               group.name = groupMetadata.subject
+               group.participants[message.sender] = {
+                  ...SCHEMA.Participant,
+                  messages: 1,
+                  lastSeen: timestampMs
+               }
+
+            if (!isEmptyObject(user.afkContext)) {
+               const print = frame('HELLO', [
+                  `💭 System detects activity from @${user.jid.split('@')[0]} after being offline for: ${toTime(timestampMs - user.afkTimestamp)}`,
+                  `🏷️ *Reason*: ${user.afkReason || '-'}`
+               ], '👀')
+               await sock.sendText(message.chat, print, user.afkContext)
+               user.afkReason = ''
+               user.afkContext = {}
+               user.afkTimestamp = -1
+            }
          }
 
          StickerCommand(message, setting.stickerCommand)
@@ -467,7 +501,11 @@ const Connect = async () => {
             setting.byteIngress += fileSize
          }
 
-         if (setting.onlineStatus && !message.fromMe && shouldUpdatePresence(message.message))
+         if (
+            setting.onlineStatus &&
+            !message.fromMe &&
+            shouldUpdatePresence(message.message)
+         )
             sock.readMessages([message.key])
 
          if (setting.slowMode)
@@ -482,7 +520,6 @@ const Connect = async () => {
             groupMetadata.participants?.some(participant =>
                (
                   participant.phoneNumber === message.sender ||
-                  participant.id === message.sender ||
                   participant.id === message.senderLid
                ) && participant.admin
             )
@@ -491,33 +528,15 @@ const Connect = async () => {
                participant.id === sock.user.decodedLid && participant.admin
             )
 
-         user.lastSeen = timestampMs
-
-         if (message.isGroup) {
-            group.lastActivity = timestampMs
-
-            if (group.participants[message.sender]) {
-               group.participants[message.sender].messages++
-               group.participants[message.sender].lastSeen = timestampMs
-            }
-            else
-               group.participants[message.sender] = {
-                  ...SCHEMA.Participant,
-                  messages: 1,
-                  lastSeen: timestampMs
-               }
-
-            if (!isEmptyObject(user.afkContext)) {
-               const print = frame('HELLO', [
-                  `💭 System detects activity from @${user.jid.split('@')[0]} after being offline for: ${toTime(timestampMs - user.afkTimestamp)}`,
-                  `🏷️ *Reason*: ${user.afkReason || '-'}`
-               ], '👀')
-               await sock.sendText(message.chat, print, user.afkContext)
-               user.afkReason = ''
-               user.afkContext = {}
-               user.afkTimestamp = -1
-            }
-         }
+         if (
+            setting.reactStatus &&
+            message.isStatus &&
+            message.type !== 'protocolMessage' &&
+            !message.fromMe
+         )
+            message.react(randomValue(STATUS_REACTIONS), {
+               statusJidList: [message.sender]
+            })
 
          if (setting.self && !isOwner) return
 

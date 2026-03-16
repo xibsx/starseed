@@ -19,7 +19,7 @@ Object.assign(global, {
    // [IMPORTANT] Bot phone number for pairing code
    botNumber: '628111111',
 
-   // Pairing using code method (set to false to use QR)
+   // Pairing using code method (set to true for pairing code, false for QR pairing)
    pairingCode: false,
 
    // User default limit (used for reset too)
@@ -33,7 +33,10 @@ Object.assign(global, {
 
    // ********** API KEYS ********** //
 
-   // [IMPORTANT] SightEngine for Anti Porn --- https://sightengine.com/
+   // Google AI Studio for Chat Bot @ https://aistudio.google.com/
+   googleApiKey: '',
+
+   // SightEngine for Anti Porn @ https://sightengine.com/
    apiUser: '',
    apiSecret: '',
 
@@ -70,7 +73,7 @@ Object.assign(global, {
    gcInterval: 3_600_000,
 
    // API request timeout
-   requestTimeout: 60_000,
+   requestTimeout: 90_000,
 
    // FFmpeg process timeout
    ffmpegTimeout: 60_000,
@@ -79,12 +82,18 @@ Object.assign(global, {
    rssLimit: 384 * 1024 * 1024,
 
    // FFmpeg stream max concurrent processes (min: 1)
-   ffmpegConcurrency: Math.max(4, cpuCount * 2)
+   ffmpegConcurrency: Math.max(4, cpuCount * 2),
+
+   // Maximum allowed NSFW score (lower values are stricter)
+   maxNSFWScore: 0.75,
+
+   // Maximum chat bot history length
+   maxHistoryChatSize: 20
 })
 
 setGlobalDispatcher(
    new Agent({
-      connections: 5,
+      connections: 3,
       pipelining: 1,
       keepAliveTimeout: 1_000,
       keepAliveMaxTimeout: 60_000,

@@ -1,6 +1,57 @@
-import { CATEGORY_DESCRIPTIONS, CATEGORY_EMOJIS } from '../lib/Constants.js'
-import { downscaleImage, fetchThumbnail, frame, greeting, toArray, toTitleCase } from '../lib/Utilities.js'
-import { ModuleCache } from '../lib/Watcher.js'
+/**
+ * This file is part of the Starseed Bot WhatsApp project, solely developed and maintained by Lia Wynn.
+ * https://github.com/itsliaaa/starseed
+ *
+ * All rights reserved.
+ *
+ * - You are NOT allowed to copy, rewrite, modify, redistribute, or reuse this file in any form.
+ * - You are NOT allowed to claim this file or any part of this project as your own.
+ * - This credit notice must NOT be removed or altered.
+ * - This file may ONLY be used within the Starseed project.
+ */
+
+import { DONATE_URL } from '@itsliaaa/baileys'
+
+import { CATEGORY_DESCRIPTIONS, CATEGORY_EMOJIS, HIGHLIGHT_LABEL, POPULAR_CATEGORIES } from '../lib/Constants.js'
+import { fetchThumbnail, frame, greeting, resizeImage, toArray, toTitleCase } from '../lib/Utilities.js'
+import { CommandIndex, ModuleCache } from '../lib/Watcher.js'
+
+let commandRegistry = null,
+   lastKnownSize = 0
+
+const getCommandRegistry = () => {
+   if (commandRegistry && lastKnownSize === CommandIndex.size)
+      return commandRegistry
+
+   const commandsSet = new Set()
+   const categoriesSet = new Set()
+   const grouped = Object.create(null)
+
+   for (const modules of ModuleCache.values()) {
+      const { command: cachedCommand, category } = modules
+
+      if (cachedCommand)
+         for (const cmd of toArray(cachedCommand))
+            commandsSet.add(cmd)
+
+      if (category) {
+         categoriesSet.add(category)
+         grouped[category] ??= []
+         grouped[category].push(...toArray(cachedCommand))
+      }
+   }
+
+   const commands = [...commandsSet].sort()
+   const categories = [...categoriesSet].sort()
+
+   for (const key in grouped)
+      grouped[key].sort()
+
+   commandRegistry = { commands, categories, grouped }
+   lastKnownSize = CommandIndex.size
+
+   return commandRegistry
+}
 
 export default {
    command: ['menu', 'command', 'help', 'allmenu'],
@@ -13,27 +64,12 @@ export default {
       text
    }) {
       try {
-         const commandsSet = new Set()
-         const categoriesSet = new Set()
-         const grouped = Object.create(null)
-         for (const modules of ModuleCache.values()) {
-            const { command: cachedCommand, category } = modules
-            if (cachedCommand)
-               for (const cmd of toArray(cachedCommand))
-                  commandsSet.add(cmd)
-            if (category) {
-               categoriesSet.add(category)
-               grouped[category] ??= []
-               grouped[category].push(...toArray(cachedCommand))
-            }
-         }
-         const commands = [...commandsSet].sort()
-         const categories = [...categoriesSet].sort()
-         for (const key in grouped)
-            grouped[key].sort()
-         let message = '🌱 Hello ' +
-            m.pushName + '\n\n' +
-            'I\'m an automated WhatsApp system that helps you download media and find information directly through WhatsApp.' + '\n\n'
+         const { commands, categories, grouped } = getCommandRegistry()
+         let message = setting.menuMessage
+            .replace('+tag', '@' + m.sender.split('@')[0])
+            .replace('+name', m.pushName)
+            .replace('+greeting', greeting()) +
+            '\n\n'
          if (command === 'allmenu') {
             message += String.fromCharCode(8206).repeat(1000)
             for (const category in grouped) {
@@ -73,13 +109,14 @@ export default {
                footer,
                nativeFlow: [{
                   text: '📄 List Menu',
-                  sections: [{
-                     rows: categories.map(category => ({
+                  sections: categories.map(category => ({
+                     ...(POPULAR_CATEGORIES[category] ? HIGHLIGHT_LABEL : {}),
+                     rows: [{
                         title: (CATEGORY_EMOJIS[category] ?? '📁') + ' ' + toTitleCase(category),
                         description: `📦 There are ${grouped[category].length} commands`,
                         id: `${isPrefix + command} ${category}`
-                     }))
-                  }]
+                     }]
+                  }))
                }]
             }, {
                quoted: m
@@ -97,13 +134,14 @@ export default {
                optionTitle: '📋 Select Options',
                nativeFlow: [{
                   text: '📄 List Menu',
-                  sections: [{
-                     rows: categories.map(category => ({
+                  sections: categories.map(category => ({
+                     ...(POPULAR_CATEGORIES[category] ? HIGHLIGHT_LABEL : {}),
+                     rows: [{
                         title: (CATEGORY_EMOJIS[category] ?? '📁') + ' ' + toTitleCase(category),
                         description: `📦 There are ${grouped[category].length} commands`,
                         id: `${isPrefix + command} ${category}`
-                     }))
-                  }]
+                     }]
+                  }))
                }, {
                   text: '📃 All Menu',
                   id: `${isPrefix}allmenu`
@@ -113,6 +151,9 @@ export default {
                }, {
                   text: '📥 Source Code',
                   id: `${isPrefix}script`
+               }, {
+                  text: '💰 Donate',
+                  url: DONATE_URL
                }]
             }, {
                quoted: m
@@ -130,16 +171,20 @@ export default {
                footer,
                nativeFlow: [{
                   text: '📄 List Menu',
-                  sections: [{
-                     rows: categories.map(category => ({
+                  sections: categories.map(category => ({
+                     ...(POPULAR_CATEGORIES[category] ? HIGHLIGHT_LABEL : {}),
+                     rows: [{
                         title: (CATEGORY_EMOJIS[category] ?? '📁') + ' ' + toTitleCase(category),
                         description: `📦 There are ${grouped[category].length} commands`,
                         id: `${isPrefix + command} ${category}`
-                     }))
-                  }]
+                     }]
+                  }))
                }, {
                   text: '📃 All Menu',
                   id: `${isPrefix}allmenu`
+               }, {
+                  text: '💰 Donate',
+                  url: DONATE_URL
                }]
             }, {
                quoted: m
@@ -159,19 +204,23 @@ export default {
                optionTitle: '📋 Select Options',
                nativeFlow: [{
                   text: '📄 List Menu',
-                  sections: [{
-                     rows: categories.map(category => ({
+                  sections: categories.map(category => ({
+                     ...(POPULAR_CATEGORIES[category] ? HIGHLIGHT_LABEL : {}),
+                     rows: [{
                         title: (CATEGORY_EMOJIS[category] ?? '📁') + ' ' + toTitleCase(category),
                         description: `📦 There are ${grouped[category].length} commands`,
                         id: `${isPrefix + command} ${category}`
-                     }))
-                  }]
+                     }]
+                  }))
                }, {
                   text: '📃 All Menu',
                   id: `${isPrefix}allmenu`
                }, {
                   text: '📊 Statistic',
                   id: `${isPrefix}statistic`
+               }, {
+                  text: '💰 Donate',
+                  url: DONATE_URL
                }]
             }, {
                quoted: m
@@ -182,8 +231,8 @@ export default {
                document: {
                   url: profilePicture
                },
-               jpegThumbnail: await downscaleImage(profilePicture, 252),
-               fileName: '👋🏻 ' + greeting() + ' ' + m.pushName,
+               jpegThumbnail: await resizeImage(profilePicture, 200),
+               fileName: '👋🏻 ' + m.pushName,
                mimetype: 'image/jpeg',
                caption: message.trim(),
                footer,
@@ -209,20 +258,21 @@ export default {
                document: {
                   url: profilePicture
                },
-               jpegThumbnail: await downscaleImage(profilePicture, 252),
-               fileName: '👋🏻 ' + greeting() + ' ' + m.pushName,
+               jpegThumbnail: await resizeImage(profilePicture, 200),
+               fileName: '👋🏻 ' + m.pushName,
                mimetype: 'image/jpeg',
                caption: message.trim(),
                footer,
                buttons: [{
                   text: '📄 List Menu',
-                  sections: [{
-                     rows: categories.map(category => ({
+                  sections: categories.map(category => ({
+                     ...(POPULAR_CATEGORIES[category] ? HIGHLIGHT_LABEL : {}),
+                     rows: [{
                         title: (CATEGORY_EMOJIS[category] ?? '📁') + ' ' + toTitleCase(category),
                         description: `📦 There are ${grouped[category].length} commands`,
                         id: `${isPrefix + command} ${category}`
-                     }))
-                  }]
+                     }]
+                  }))
                }, {
                   text: '📃 All Menu',
                   id: `${isPrefix}allmenu`

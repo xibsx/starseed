@@ -13,7 +13,10 @@ export default {
          if (!args[0])
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} 100000`)
          m.react('🕒')
-         const data = await zenzxz('maker/fakedanav2', {
+         const path = args[1] === '--crop' ?
+            'fakedana' :
+            'fakedanav2'
+         const data = await zenzxz('maker/' + path, {
             nominal: args[0]
          })
          if (!Buffer.isBuffer(data))

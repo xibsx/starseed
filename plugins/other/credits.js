@@ -22,6 +22,9 @@ export default {
       const printCredits = frame('CREDITS', [
          'itsliaaa — Project Maintainer & Creator'
       ], '👤')
+      const printDonateUrl = frame('DONATE', [
+         DONATE_URL
+      ], '💰')
       const printAPIs = frame('THIRD-PARTY SERVICES', [
          'rynn-k — Nekolabs API',
          'elrayyxml — Nexray API',
@@ -32,13 +35,10 @@ export default {
       const printSourceCode = frame('SOURCE CODE', [
          'https://github.com/itsliaaa/starseed#readme'
       ], '🧩')
-      const printDonateUrl = frame('DONATE', [
-         DONATE_URL
-      ], '💰')
       m.reply(printCredits + '\n\n' +
+         printDonateUrl + '\n\n' +
          printAPIs + '\n\n' +
-         printSourceCode + '\n\n' +
-         printDonateUrl, {
+         printSourceCode, {
          externalAdReply: {
             title: botName,
             body: greeting(),

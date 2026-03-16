@@ -1,4 +1,4 @@
-import { downscaleImage, isMimeImage, isMimeVideo, isMimeWebP, persistToFile } from '../../lib/Utilities.js'
+import { isMimeImage, isMimeVideo, isMimeWebP, persistToFile, resizeImage } from '../../lib/Utilities.js'
 
 import SightEngine from '../../lib/Components/SightEngine.js'
 
@@ -22,7 +22,7 @@ export default {
       let buffer = await m.download()
       if (!Buffer.isBuffer(buffer)) return
       if (isMimeWebP(m.msg.mimetype))
-         buffer = await downscaleImage(buffer)
+         buffer = await resizeImage(buffer)
       const filePath = await persistToFile(buffer)
       let isPorn
       if (isMimeImage(m.msg.mimetype))

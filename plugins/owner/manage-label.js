@@ -11,7 +11,7 @@ export default {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} WhatsApp bot`)
          if (text.length > 30)
-            return m.reply('❌ Max characters for label is 30.')
+            return m.reply('❌ Maximum 30 characters.')
          await sock.updateMemberLabel(m.chat, text)
          m.reply('✅ Successfully set member label for bot.')
       }

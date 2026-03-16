@@ -1,6 +1,6 @@
 import { nexray } from '../../lib/Request.js'
 import { uguu } from '../../lib/Scraper.js'
-import { downscaleImage, isMimeWebP } from '../../lib/Utilities.js'
+import { isMimeWebP, resizeImage } from '../../lib/Utilities.js'
 
 export default {
    command: ['toimage', 'tovideo'],
@@ -27,7 +27,7 @@ export default {
                return m.reply('❌ Failed to get data.')
          }
          else
-            data = await downscaleImage(
+            data = await resizeImage(
                await q.download(),
                512
             )

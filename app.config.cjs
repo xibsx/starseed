@@ -2,7 +2,7 @@ module.exports = {
    apps: [{
       name: 'bot',
       script: './index.js',
-      node_args: ['--max-old-space-size=320'],
+      node_args: ['--max-old-space-size=288'],
       stop_exit_codes: [0],
       env: {
          NODE_ENV: 'production'
@@ -11,7 +11,7 @@ module.exports = {
       name: 'smol',
       script: './index.js',
       node_args: [
-         '--max-old-space-size=128',
+         '--max-old-space-size=144',
          '--max-semi-space-size=1',
          '--optimize-for-size',
          '--expose-gc'

@@ -69,7 +69,7 @@ export default {
       if (BOT_ADMIN_COMMANDS.includes(command) && !isBotAdmin)
          return m.reply('⚠️ This command will work when bot become an admin.')
       if (command === 'antiporn' && (!apiUser || !apiSecret))
-         return m.reply('❌ The Anti Porn feature is currently unavailable. Please ask the bot owner to set it up first.')
+         return m.reply('❌ Anti Porn feature is currently unavailable. Please ask the bot owner to set it up first.')
       const isActivating = option === 'on'
       const keySetting = MODERATION_MAPS[command] || command
       const prettyKeyName = PRETTY_MODERATION_MAPS[command]

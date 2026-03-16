@@ -33,7 +33,7 @@ export default {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} Hi!`)
          if (text.length > 1000)
-            return m.reply('❌ Max characters for group description is 1000.')
+            return m.reply('❌ Maximum 1000 characters.')
          await sock.groupUpdateDescription(m.chat, text)
          m.reply('✅ Successfully change the group description.')
       }
@@ -41,7 +41,7 @@ export default {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} Hi!`)
          if (text.length > 100)
-            return m.reply('❌ Max characters for group name is 1000.')
+            return m.reply('❌ Maximum 100 characters.')
          await sock.groupUpdateSubject(m.chat, text)
          m.reply('✅ Successfully change the group name.')
       }
