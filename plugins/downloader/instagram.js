@@ -1,5 +1,5 @@
 import { instagram } from '../../lib/Scraper.js'
-import { isURL } from '../../lib/Utilities.js'
+import { isURL, resizeImage } from '../../lib/Utilities.js'
 
 export default {
    command: 'instagram',
@@ -20,8 +20,13 @@ export default {
          const data = await instagram(args[0])
          if (!data.media.length)
             return m.reply('❌ Failed to get data.')
-         if (data.media.length <= 2)
-            return sock.sendMedia(m.chat, data.media[0].url, '', m)
+         if (data.media.length <= 2) {
+            const resized =
+               data.media[0].type === 'image' ?
+                  await resizeImage(data.media[0].url, 720) :
+                  data.media[0].url
+            return sock.sendMedia(m.chat, resized, '', m)
+         }
          sock.sendMessage(m.chat, {
             album: data.media.map(media => {
                if (media.type === 'audio') return

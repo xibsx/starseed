@@ -4,6 +4,11 @@ import Gemini from '../../lib/Components/Gemini.js'
 
 const MAX_SIZE = 1024 * 1024 * 3
 
+const QUOTED_MESSAGE = {
+   true: '[User quoted your message]:',
+   false: '[Quoted a user’s message]:'
+}
+
 export default {
    async run(m, {
       sock,
@@ -26,7 +31,7 @@ export default {
          const mediaSize = (q.msg || q).fileLength?.low
          const instanceBody = (
             m.quoted ?
-               body + '\n\n' + m.quoted.text :
+               body + `\n\n${QUOTED_MESSAGE[m.quoted.fromMe]}` + m.quoted.text :
                body
          )?.trim()
          const cleanBody = instanceBody
@@ -35,12 +40,12 @@ export default {
             .trim()
          let isTag = false
          for (const userId of m.mentionedJid)
-            if (userId === sock.user.decodedId) {
+            if (userId === sock.user.decodedId || userId === sock.user.decodedLid) {
                isTag = true
                break
             }
          if (!isTag && m.quoted)
-            isTag = m.quoted.sender === sock.user.decodedId
+            isTag = m.quoted.sender === sock.user.decodedId || m.quoted.sender === sock.user.decodedLid
          if ((m.isGroup && isTag) || m.isPrivate) {
             if (mediaSize && mediaSize > MAX_SIZE)
                return m.reply('❌ Maximum media size is 3MB.')

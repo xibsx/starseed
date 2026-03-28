@@ -1,7 +1,7 @@
 import { isJidNewsletter } from '@itsliaaa/baileys'
 
 import { nexray } from '../../lib/Request.js'
-import { fetchAsBuffer } from '../../lib/Utilities.js'
+import { fetchAsBuffer, frame } from '../../lib/Utilities.js'
 
 export default {
    command: 'spotplay',
@@ -21,9 +21,11 @@ export default {
          })
          if (!data.status)
             return m.reply('❌ Failed to get data.')
-         sock.sendMedia(m.chat, data.result.download_url, '', m, {
-            audio: true,
-            ptt: isJidNewsletter(m.chat),
+         const printCaption = frame('SPOTIFY PLAY', [
+            `*Title*: ${data.result.title}`,
+            `*Artist*: ${data.result.artist}`
+         ], '🎵')
+         m.reply(printCaption, {
             externalAdReply: {
                title: data.result.title,
                body: '✍🏻 Artist: ' + data.result.artist,
@@ -32,6 +34,10 @@ export default {
                sourceUrl: data.result.url,
                largeThumbnail: true
             }
+         })
+         sock.sendMedia(m.chat, data.result.download_url, '', m, {
+            audio: true,
+            ptt: isJidNewsletter(m.chat)
          })
       }
       catch (error) {

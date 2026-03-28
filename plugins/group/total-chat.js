@@ -18,7 +18,7 @@ export default {
          .sort((a, b) => b.messages - a.messages)
       const topChat = sorted.slice(0, 10).flatMap((user, index, array) => {
          const lines = [
-            `${medal(index)} *Name*: ${user.name}`,
+            `${medal(index)} ${user.name}`,
             `*Messages*: ${user.messages}`
          ]
          if (index !== array.length - 1)

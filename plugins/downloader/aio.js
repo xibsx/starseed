@@ -2,25 +2,22 @@ import { nekolabs, nexray } from '../../lib/Request.js'
 import { instagram, tiktok } from '../../lib/Scraper.js'
 import { isURL, resizeImage } from '../../lib/Utilities.js'
 
-export const URL_REGEX = /https?:\/\/[^\s]+?(?=[\s]|$)/
+import { URL_REGEX } from './_auto-download.js'
 
 export default {
+   command: 'aio',
+   hidden: ['download', 'dl'],
+   category: 'downloader',
    async run(m, {
       sock,
-      user,
-      setting,
-      isPartner,
-      body
+      isPrefix,
+      command,
+      text
    }) {
-      if (!setting.autoDownload || !isURL(body)) return
-      if (!isPartner) {
-         if (user.limit > 0)
-            user.limit -= 1
-         else
-            return m.reply(`⚠️ Your limit is not enough to use auto download, try \`${setting.prefixes[0]}claim\` command to claim limit.`)
-      }
+      if (!isURL(text))
+         return m.reply(`👉🏻 *Example*: ${isPrefix + command} https://vt.tiktok.com/ZSUYJLQfg/`)
       URL_REGEX.lastIndex = 0
-      const match = URL_REGEX.exec(body)
+      const match = URL_REGEX.exec(text)
       if (!match?.[0]) return
       const url = match[0]
       try {
@@ -145,10 +142,13 @@ export default {
                return m.reply('❌ Failed to get data.')
             sock.sendMedia(m.chat, data.result.url, data.result.title, m)
          }
+         else
+            m.reply('❌ Unsupported URL.')
       }
       catch (error) {
          console.error(error)
          m.reply('❌ ' + error.message)
       }
-   }
+   },
+   limit: 1
 }

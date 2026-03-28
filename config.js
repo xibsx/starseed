@@ -48,14 +48,17 @@ Object.assign(global, {
    // Bot thumbnail (optional, you can change it with setcover command)
    botThumbnail: './lib/Media/thumbnail.jpg',
 
-   // Auth state folder name (optional)
-   authFolder: 'session',
+   // Bot menu music (optional, you can change it with setmenumusic command)
+   botMenuMusic: './lib/Media/music.mp3',
 
    // Temporary folder name (optional)
    temporaryFolder: 'temp',
 
    // Plugins folder name (optional)
    pluginsFolder: 'plugins',
+
+   // Auth state folder name (optional)
+   authFolder: 'session',
 
    // Store file name (optional)
    storeFilename: 'store.json',
@@ -72,17 +75,26 @@ Object.assign(global, {
    // Call the garbage collector if exposed (ms)
    gcInterval: 3_600_000,
 
-   // API request timeout
+   // API request timeout (ms)
    requestTimeout: 90_000,
 
-   // FFmpeg process timeout
+   // FFmpeg process timeout (ms)
    ffmpegTimeout: 60_000,
+
+   // Min delay response (ms)
+   minDelay: 100,
+
+   // Max delay response (ms)
+   maxDelay: 3_000,
+
+   // Ignore user old message (sec)
+   ignoreOldMessageTimestamp: 30,
 
    // RSS limit (mb)
    rssLimit: 384 * 1024 * 1024,
 
    // FFmpeg stream max concurrent processes (min: 1)
-   ffmpegConcurrency: Math.max(4, cpuCount * 2),
+   ffmpegConcurrency: Math.max(4, Math.floor(cpuCount * 1.5)),
 
    // Maximum allowed NSFW score (lower values are stricter)
    maxNSFWScore: 0.75,
@@ -93,12 +105,15 @@ Object.assign(global, {
 
 setGlobalDispatcher(
    new Agent({
-      connections: 3,
+      connections: 4,
       pipelining: 1,
-      keepAliveTimeout: 1_000,
+      keepAliveTimeout: 3_000,
       keepAliveMaxTimeout: 60_000,
       connectTimeout: 5_000,
       bodyTimeout: 30_000,
-      maxRedirections: 2
+      maxRedirections: 3,
+      connect: {
+         rejectUnauthorized: false
+      }
    })
 )

@@ -5,7 +5,7 @@ import { mkdir, readdir, readFile, rename, unlink, writeFile } from 'fs/promises
 import { basename, dirname, join, relative, resolve } from 'path'
 
 import { AVAILABLE_MODELS } from '../../lib/Constants.js'
-import { createFileName, frame, isMimeImage, persistToFile, resizeImage, toArray } from '../../lib/Utilities.js'
+import { createFileName, isMimeAudio, isMimeImage, persistToFile, resizeImage, Sender, toArray } from '../../lib/Utilities.js'
 import { ModuleCache } from '../../lib/Watcher.js'
 
 const TOP_PATH = 'starseed-main/'
@@ -29,11 +29,13 @@ const SETTING_MAPS = {
    autodownload: 'autoDownload',
    chatbot: 'chatBot',
    commandsuggestion: 'commandSuggestions',
+   menumusic: 'menuMusic',
    noprefix: 'noPrefix',
-   onlinestatus: 'onlineStatus',
    reactstatus: 'reactStatus',
+   readmessage: 'readMessage',
    rejectcall: 'rejectCall',
-   slowmode: 'slowMode'
+   slowmode: 'slowMode',
+   typingpresence: 'typingPresence'
 }
 
 const PRETTY_SETTING_MAPS = {
@@ -42,15 +44,17 @@ const PRETTY_SETTING_MAPS = {
    autodownload: 'Auto Download',
    chatbot: 'Chat Bot',
    commandsuggestion: 'Command Suggestions',
+   menumusic: 'Menu Music',
    noprefix: 'No Prefix',
-   onlinestatus: 'Online Status',
-   reactStatus: 'React Status',
+   reactstatus: 'React Status',
+   readmessage: 'Read Message',
    rejectcall: 'Reject Call',
-   slowmode: 'Slow Mode'
+   slowmode: 'Slow Mode',
+   typingpresence: 'Typing Presence'
 }
 
-const ExcludeForWrap = new Set(['node_modules', 'yarn.lock', 'package-lock.json', '.git', '.github', '.gitignore', 'session', databaseFilename, storeFilename, temporaryFolder])
-const ExcludeForUnzip = new Set(['.git', '.github', '.gitignore', 'config.js'])
+const ExcludeForWrap = new Set(['.git', '.github', '.gitignore', 'node_modules', 'package-lock.json', 'session', 'yarn.lock', databaseFilename, storeFilename, temporaryFolder])
+const ExcludeForUnzip = new Set(['.git', '.github', '.gitignore', 'broadcast.jpg', 'mosque.jpg', 'profile.jpg', 'thumbnail.jpg'])
 
 const writeAndDrain = (stream, chunk) =>
    new Promise((resolve, reject) => {
@@ -169,7 +173,7 @@ const atomicWrite = (db, store) =>
    ])
 
 export default {
-   command: ['afknotifier', 'autodownload', 'backup', 'backupsc', 'chatbot', 'commandsuggestion', 'disable', 'enable', 'gconly', 'noprefix', 'onlinestatus', 'reactstatus', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setinstruction', 'setmenu', 'setmenumessage', 'setmodel', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'public', 'self', 'updatesc', '+prefix', '-prefix'],
+   command: ['afknotifier', 'autodownload', 'backup', 'backupsc', 'chatbot', 'commandsuggestion', 'disable', 'enable', 'gconly', 'menumusic', 'noprefix', 'public', 'reactstatus', 'readmessage', 'rejectcall', 'resetlimit', 'restart', 'restore', 'setbroadcastcd', 'setinstruction', 'setmenu', 'setmenumusic', 'setmenumessage', 'setmodel', 'setname', 'setbio', 'setpp', 'setcover', 'setchid', 'slowmode', 'self', 'typingpresence', 'updatesc', '+prefix', '-prefix'],
    category: 'owner',
    async run (m, {
       sock,
@@ -186,12 +190,14 @@ export default {
          command === 'autodownload' ||
          command === 'chatbot' ||
          command === 'commandsuggestion' ||
+         command === 'menumusic' ||
          command === 'gconly' ||
          command === 'noprefix' ||
-         command === 'onlinestatus' ||
          command === 'reactstatus' ||
+         command === 'readmessage' ||
          command === 'rejectcall' ||
-         command === 'slowmode'
+         command === 'slowmode' ||
+         command === 'typingpresence'
       ) {
          const [option] = args
          if (!option)
@@ -212,6 +218,8 @@ export default {
          print = isActivating ?
             `✅ Successfully activating ${prettyKeyName}.` :
             `✅ Successfully deactivating ${prettyKeyName}.`
+         if (command === 'typingpresence')
+            Sender(sock, setting.typingPresence)
          m.reply(print)
       }
       else if (command === 'backup') {
@@ -269,7 +277,7 @@ export default {
       else if (command === 'restart') {
          await m.reply('🔃 Restarting...')
          await atomicWrite(db, store)
-         await sock.end()
+         sock.end()
          process.send('reset')
       }
       else if (command === 'restore') {
@@ -307,6 +315,19 @@ export default {
          m.reply('✅ Successfully set menu style.' +
             '\n\n> ' + selected)
       }
+      else if (command === 'setmenumusic') {
+         const q = m.quoted?.url ? m.quoted : m
+         const mimetype = (q.msg || q).mimetype
+         if (!isMimeAudio(mimetype))
+            return m.reply(`❌ Invalid media type, audio only.`)
+         m.react('🕒')
+         const buffer = await q.download()
+         if (!Buffer.isBuffer(buffer))
+            return m.reply('❌ Failed to download media.')
+         const filePath = await persistToFile(buffer)
+         await rename(filePath, botMenuMusic)
+         m.reply('✅ Successfully set music.')
+      }
       else if (command === 'setmenumessage') {
          if (!text)
             return m.reply(`👉🏻 *Example*: ${isPrefix + command} Hello +tag (+name) +greeting 👋🏻`)
@@ -314,12 +335,9 @@ export default {
          m.reply('✅ Successfully set menu message.')
       }
       else if (command === 'setmodel') {
-         if (!text.includes('--model')) {
-            const printMessage = frame('AI MODELS', [
-               `Choose a model`
-            ], '👾')
+         if (!text.includes('--model'))
             return sock.sendMessage(m.chat, {
-               text: printMessage,
+               text: 'Choose a model',
                footer,
                nativeFlow: [{
                   text: '📄 List Model',
@@ -336,7 +354,6 @@ export default {
             }, {
                quoted: m
             })
-         }
          if (!googleApiKey)
             return m.reply('❌ Google API key is missing. Please configure `googleApiKey` in `config.js` first.')
          const model = args[1]
@@ -382,9 +399,7 @@ export default {
          const filePath = await persistToFile(
             await resizeImage(buffer, 720)
          )
-         await rename(filePath,
-            join('lib', 'Media', 'thumbnail.jpg')
-         )
+         await rename(filePath, botThumbnail)
          m.reply('✅ Successfully set cover.')
       }
       else if (command === 'setchid') {

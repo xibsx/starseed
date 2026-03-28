@@ -63,7 +63,7 @@ const Start = () => {
       console.error(`⚠️ Exited with code ${code}`)
 
       if (code !== 0)
-         setTimeout(Start, 3000)
+         setTimeout(Start, 2000)
    })
 }
 

@@ -90,11 +90,13 @@ export default {
             `*Chat Bot*: ${setting.chatBot ? '✅' : '❌'}`,
             `*Command Suggestions*: ${setting.commandSuggestions ? '✅' : '❌'}`,
             `*Group Only*: ${setting.groupOnly ? '✅' : '❌'}`,
+            `*Menu Music*: ${setting.menuMusic ? '✅' : '❌'}`,
             `*No Prefix*: ${setting.noPrefix ? '✅' : '❌'}`,
-            `*Online Status*: ${setting.onlineStatus ? '✅' : '❌'}`,
             `*React Status*: ${setting.reactStatus ? '✅' : '❌'}`,
+            `*Read Message*: ${setting.readMessage ? '✅' : '❌'}`,
             `*Reject Call*: ${setting.rejectCall ? '✅' : '❌'}`,
             `*Slow Mode*: ${setting.slowMode ? '✅' : '❌'}`,
+            `*Typing Presence*: ${setting.typingPresence ? '✅' : '❌'}`,
             `*Prefixes*: [${setting.prefixes}]`,
             `*Last Reset*: ${formatTime('YYYY/MM/DD HH:mm:ss', setting.lastReset)}`
          ], '⚙️')

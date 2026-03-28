@@ -28,7 +28,7 @@ export default {
       })
       const leaderboard = sorted.slice(0, 10).flatMap((userData, index, array) => {
          const lines = [
-            `${medal(index)} *Name*: ${userData.name}`,
+            `${medal(index)} ${userData.name}`,
             `*Limit*: ${isPartnerOrOwner(userData) ? '`ꝏ Unlimited`' : userData.limit}`
          ]
          if (index !== array.length - 1)

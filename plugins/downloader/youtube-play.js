@@ -1,7 +1,7 @@
 import { isJidNewsletter } from '@itsliaaa/baileys'
 
 import { nexray } from '../../lib/Request.js'
-import { fetchAsBuffer } from '../../lib/Utilities.js'
+import { fetchAsBuffer, frame } from '../../lib/Utilities.js'
 
 export default {
    command: 'play',
@@ -21,18 +21,26 @@ export default {
          })
          if (!data.status)
             return m.reply('❌ Failed to get data.')
-         sock.sendMedia(m.chat, data.result.download_url, '', m, {
-            audio: true,
-            ptt: isJidNewsletter(m.chat),
+         const printCaption = frame('YOUTUBE PLAY', [
+            `*Title*: ${data.result.title}`,
+            `*Views*: ${data.result.views}`,
+            `*Duration*: ${data.result.duration}`,
+            `*Uploaded*: ${data.result.upload_at}`
+         ], '🎵')
+         m.reply(printCaption, {
             externalAdReply: {
                title: data.result.title,
-               body: '👁️ Views: ' + data.result.views,
+               body: data.result.description,
                thumbnail: await fetchAsBuffer(data.result.thumbnail || botThumbnail),
                url: data.result.url,
                sourceUrl: data.result.url,
                largeThumbnail: true,
                mediaType: 2
             }
+         })
+         sock.sendMedia(m.chat, data.result.download_url, '', m, {
+            audio: true,
+            ptt: isJidNewsletter(m.chat)
          })
       }
       catch (error) {

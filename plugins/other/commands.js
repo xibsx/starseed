@@ -1,6 +1,6 @@
 import { CATEGORY_EMOJIS } from '../../lib/Constants.js'
-import { frame, toArray, toTitleCase } from '../../lib/Utilities.js'
-import { ModuleCache, CommandIndex } from '../../lib/Watcher.js'
+import { toArray, toTitleCase } from '../../lib/Utilities.js'
+import { CommandIndex, ModuleCache } from '../../lib/Watcher.js'
 
 export default {
    command: 'commands',
@@ -13,12 +13,9 @@ export default {
          if (!category) continue
          ;(grouped[category] ??= []).push(...toArray(command))
       }
-      const printMessage = frame('COMMAND STATS', [
-         `There are ${CommandIndex.size} commands available`
-      ], '📏')
       sock.sendMessage(m.chat, {
          pollResult: {
-            name: printMessage,
+            name: `📏 There are ${Object.keys(CommandIndex).length} commands available`,
             votes: Object.keys(grouped)
                .sort()
                .map(category => ({

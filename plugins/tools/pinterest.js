@@ -22,6 +22,10 @@ export default {
             return m.reply('❌ Failed to get data.')
          const album = shuffleArray(data.result)
             .splice(0, 3)
+         if (!album.length)
+            return m.reply('❌ Failed to get data.')
+         if (album.length < 2)
+            return sock.sendMedia(m.chat, album[0].videos_url || album[0].images_url, '', m)
          sock.sendMessage(m.chat, {
             album: album.map((media) => ({
                [media.type]: {

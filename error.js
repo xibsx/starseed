@@ -10,16 +10,20 @@
  * - This file may ONLY be used within the Starseed project.
  */
 
-const REJECTION_IGNORE = [
+const ERROR_MESSAGES = [
    'Timed',
    'Error',
    'TypeError',
    'SessionError',
    'ENOENT',
+   'ENOSPC',
    'Device logged out',
    'Connection Closed',
    'bad-request',
-   'forbidden'
+   'forbidden',
+   'terminated',
+   'simultaneous',
+   'all hosts'
 ]
 
 const patchConsole = (method, { ignore = [], transform } = {}) => {
@@ -75,10 +79,14 @@ process.on('warning', (warning) => {
 })
 
 process.on('uncaughtException', (error) => {
-   if (error?.code === 'ENOMEM')
+   const message = String(reason?.code || reason || '')
+
+   if (message === 'ENOMEM')
       console.error('❌ Out of memory, restarting...')
    else
       console.error('❌ Uncaught Exception', ':', error)
+
+   if (ERROR_MESSAGES.some(condition => message.includes(condition))) return
 
    process.exit(1)
 })
@@ -86,7 +94,7 @@ process.on('uncaughtException', (error) => {
 process.on('unhandledRejection', (reason) => {
    const message = String(reason?.message || reason || '')
 
-   if (REJECTION_IGNORE.some(condition => message.includes(condition))) return
+   if (ERROR_MESSAGES.some(condition => message.includes(condition))) return
 
    console.error('❌ Unhandled Rejection', ':', reason)
    process.exit(1)

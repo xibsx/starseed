@@ -12,7 +12,7 @@
 
 import { DONATE_URL } from '@itsliaaa/baileys'
 
-import { CATEGORY_DESCRIPTIONS, CATEGORY_EMOJIS, HIGHLIGHT_LABEL, POPULAR_CATEGORIES } from '../lib/Constants.js'
+import { CATEGORY_DESCRIPTIONS, CATEGORY_EMOJIS, FAKE_QUOTE, HIGHLIGHT_LABEL, POPULAR_CATEGORIES } from '../lib/Constants.js'
 import { fetchThumbnail, frame, greeting, resizeImage, toArray, toTitleCase } from '../lib/Utilities.js'
 import { CommandIndex, ModuleCache } from '../lib/Watcher.js'
 
@@ -20,7 +20,8 @@ let commandRegistry = null,
    lastKnownSize = 0
 
 const getCommandRegistry = () => {
-   if (commandRegistry && lastKnownSize === CommandIndex.size)
+   const commandIndexSize = Object.keys(CommandIndex).length
+   if (commandRegistry && lastKnownSize === commandIndexSize)
       return commandRegistry
 
    const commandsSet = new Set()
@@ -48,7 +49,7 @@ const getCommandRegistry = () => {
       grouped[key].sort()
 
    commandRegistry = { commands, categories, grouped }
-   lastKnownSize = CommandIndex.size
+   lastKnownSize = commandIndexSize.size
 
    return commandRegistry
 }
@@ -76,7 +77,7 @@ export default {
                message += frame(category.toUpperCase(), grouped[category].map(cmd => isPrefix + cmd), CATEGORY_EMOJIS[category] ?? '📁') +
                   '\n\n'
             }
-            m.reply(message.trim(), {
+            return m.reply(message.trim(), {
                externalAdReply: {
                   title: botName,
                   body: greeting(),
@@ -87,7 +88,7 @@ export default {
          }
          else if (categories.includes(text)) {
             const print = frame(text.toUpperCase(), grouped[text].map(cmd => isPrefix + cmd), CATEGORY_EMOJIS[text] ?? '📁')
-            m.reply(print.trim())
+            return m.reply(print.trim())
          }
          else if (setting.menuStyle == 1) {
             message += frame('CATEGORIES', categories.map(cmd => isPrefix + command + ' ' + cmd), '📋')
@@ -307,6 +308,10 @@ export default {
                }))
             }, {
                quoted: m
+            })
+         if (setting.menuMusic)
+            sock.sendMedia(m.chat, botMenuMusic, '', FAKE_QUOTE, {
+               ptt: true
             })
       }
       catch (error) {
