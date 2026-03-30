@@ -11,7 +11,7 @@ This project is a direct implementation of [`@itsliaaa/baileys`](https://github.
 
 | Principle | Implementation |
 |------------|----------------|
-| ⚡ Native ESM Architecture | Fully structured using modern ECMAScript Modules (`type: module`) and designed for Node.js >=20 environments. |
+| ⚡ Native ESM Architecture | Fully structured using modern ECMAScript Modules (`type: module`) and designed for Node.js >=20.18.1 environments. |
 | 🪶 Lean Dependency Strategy | Minimal, purpose-specific dependencies to keep the runtime lightweight. |
 | 🧩 Runtime Minimalism | No obfuscation or bundling layers are used, ensuring predictable execution and optimal performance. |
 
@@ -22,9 +22,9 @@ This project is a direct implementation of [`@itsliaaa/baileys`](https://github.
 | 1 vCPU | 1 vCPU |
 | 512 MB RAM | 1 GB RAM |
 | 1 GB Free Space | 2 GB Free Space |
-| FFmpeg v6.x | FFmpeg v6.x |
-| Node.js v20 LTS | Node.js v24 LTS |
-| Yarn v1.x | Yarn v1.22.22 |
+| FFmpeg v6.x.x | FFmpeg v6.x.x |
+| Node.js v20.18.1 LTS | Node.js v24.x.x LTS |
+| Yarn v1.x.x | Yarn v1.22.22 |
 
 ### 🗄️ Server
 

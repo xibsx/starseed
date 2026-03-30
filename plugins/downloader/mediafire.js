@@ -21,6 +21,7 @@ export default {
          if (!data.status)
             return m.reply('❌ Failed to get data.')
          sock.sendMedia(m.chat, data.result.download_url, '', m, {
+            fileName: args[0].split('/').filter(string => string && !string.includes('file')).at(-1),
             document: true
          })
       }

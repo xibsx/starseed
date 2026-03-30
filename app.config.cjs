@@ -5,8 +5,7 @@ module.exports = {
       node_args: ['--max-old-space-size=288'],
       stop_exit_codes: [0],
       env: {
-         NODE_ENV: 'production',
-         UV_THREADPOOL_SIZE: 8
+         NODE_ENV: 'production'
       }
    }, {
       name: 'smol',
@@ -19,8 +18,7 @@ module.exports = {
       ],
       stop_exit_codes: [0],
       env: {
-         NODE_ENV: 'production',
-         UV_THREADPOOL_SIZE: 6
+         NODE_ENV: 'production'
       }
    }]
 }

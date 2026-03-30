@@ -1,7 +1,7 @@
 import { Agent, setGlobalDispatcher } from 'undici'
 import { cpus } from 'os'
 
-const cpuCount = cpus().length
+const CPU_COUNT = cpus().length
 
 Object.assign(global, {
    // Owner name
@@ -90,11 +90,14 @@ Object.assign(global, {
    // Ignore user old message (sec)
    ignoreOldMessageTimestamp: 30,
 
+   // Search cache results TTL (sec)
+   searchCacheTTL: 300,
+
    // RSS limit (mb)
    rssLimit: 384 * 1024 * 1024,
 
    // FFmpeg stream max concurrent processes (min: 1)
-   ffmpegConcurrency: Math.max(4, Math.floor(cpuCount * 1.5)),
+   ffmpegConcurrency: Math.max(3, Math.floor(CPU_COUNT * 1.3)),
 
    // Maximum allowed NSFW score (lower values are stricter)
    maxNSFWScore: 0.75,

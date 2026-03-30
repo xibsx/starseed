@@ -5,6 +5,7 @@ import { isURL } from '../../lib/Utilities.js'
 
 export default {
    command: ['ytmp3', 'ytmp4'],
+   hidden: ['yta', 'ytv'],
    category: 'downloader',
    async run(m, {
       sock,
@@ -18,15 +19,15 @@ export default {
          if (!isURL(args[0]))
             return m.reply('❌ Invalid URL.')
          m.react('🕒')
-         const path = command === 'ytmp4' ?
-            'v1/ytmp4' :
-            'ytmp3'
+         const shouldAsAudio = command === 'ytmp3' || command === 'yta'
+         const path = shouldAsAudio ?
+            'ytmp3' :
+            'v1/ytmp4'
          const data = await nexray('downloader/' + path, {
             url: args[0]
          })
          if (!data.status)
             return m.reply('❌ Failed to get data.')
-         const shouldAsAudio = command === 'ytmp3'
          sock.sendMedia(m.chat, data.result.url, data.result.title, m, {
             audio: shouldAsAudio,
             ptt: shouldAsAudio && isJidNewsletter(m.chat)

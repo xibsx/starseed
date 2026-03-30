@@ -13,13 +13,13 @@
 import { spawn } from 'child_process'
 import { fileURLToPath } from 'url'
 
-const file = fileURLToPath(
+const SETUP_PATH = fileURLToPath(
    new URL('./handler.js', import.meta.url)
 )
-const major = parseInt(
-   process.versions.node.split('.')[0],
-   10
-)
+
+const [MAJOR, MINOR, PATCH] = process.versions.node
+   .split('.')
+   .map(value => +value.replace(/\D.*$/, ''))
 
 const Banner = async () => {
    const { default: CFonts } = await import('cfonts')
@@ -42,7 +42,7 @@ const Banner = async () => {
 const Start = () => {
    const p = spawn(process.execPath, [
       ...process.execArgv,
-      file,
+      SETUP_PATH,
       ...process.argv.slice(2)
    ], {
       stdio: ['inherit', 'inherit', 'inherit', 'ipc']
@@ -69,14 +69,17 @@ const Start = () => {
 
 Banner()
 
-if (major < 20) {
+if (
+   MAJOR < 20 ||
+   (MAJOR == 20 && MINOR < 18) ||
+   (MAJOR == 20 && MINOR == 18 && PATCH < 1)
+) {
    console.error(
-      `\n❌ This script requires Node.js 20+ to run reliably.\n` +
+      `\n❌ This script requires Node.js 20.18.1 or above to run reliably.\n` +
       `   You are using Node.js ${process.versions.node}.\n` +
-      `   Please upgrade to Node.js 20+ to proceed.\n`
+      `   Please upgrade to Node.js 20.18.1 or above to proceed.\n`
    )
-
-   process.exit(0)
+   process.exit(1)
 }
 
 Start()

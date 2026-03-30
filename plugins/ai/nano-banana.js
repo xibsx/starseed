@@ -3,8 +3,7 @@ import { uguu } from '../../lib/Scraper.js'
 import { isMimeImage } from '../../lib/Utilities.js'
 
 export default {
-   command: 'editimage',
-   hidden: 'nanobanana',
+   command: 'nanobanana',
    category: 'ai',
    async run(m, {
       sock,

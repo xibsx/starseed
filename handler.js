@@ -66,6 +66,10 @@ const Connect = async (state, saveCreds) => {
             chat: key.remoteJid,
             id: key.id
          }),
+      appStateMacVerification: {
+         patch: true,
+         snapshot: true
+      },
       auth: {
          creds: state.creds,
          keys: makeCacheableSignalKeyStore(state.keys)
@@ -127,22 +131,22 @@ const Connect = async (state, saveCreds) => {
                console.error('❌ Connection timed out to WhatsApp, restarting...')
                break
             case DisconnectReason.badSession:
-               cleanUpFolder(authFilename)
+               cleanUpFolder(authFolder)
                console.error('❌ Invalid session, please re-pair')
                break
             case DisconnectReason.connectionReplaced:
                console.error('❌ Connection overlapping, restarting...')
                break
             case DisconnectReason.loggedOut:
-               cleanUpFolder(authFilename)
+               cleanUpFolder(authFolder)
                console.error('❌ Device logged out, please re-pair')
                break
             case DisconnectReason.forbidden:
-               cleanUpFolder(authFilename)
+               cleanUpFolder(authFolder)
                console.error('❌ Connection failed, please re-pair')
                break
             case DisconnectReason.multideviceMismatch:
-               cleanUpFolder(authFilename)
+               cleanUpFolder(authFolder)
                console.error('❌ Please re-pair')
                break
             case DisconnectReason.restartRequired:
@@ -150,7 +154,7 @@ const Connect = async (state, saveCreds) => {
                console.log('✅ Successfully connected to WhatsApp')
                break
             default:
-               cleanUpFolder(authFilename)
+               cleanUpFolder(authFolder)
                console.error('❌ Connection lost with unknown reason', ':', reason)
          }
 
@@ -410,7 +414,7 @@ const Connect = async (state, saveCreds) => {
 
          Serialize(sock, message)
 
-         if (!message.type) continue
+         if (!message.type || store.hasMessage(message)) continue
 
          StickerCommand(message, setting.stickerCommand)
 

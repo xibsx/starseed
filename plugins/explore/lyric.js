@@ -4,7 +4,7 @@ import { deline } from '../../lib/Request.js'
 import { frame } from '../../lib/Utilities.js'
 
 const ResultCache = new NodeCache({
-   stdTTL: 180,
+   stdTTL: searchCacheTTL,
    useClones: false,
    deleteOnExpire: true
 })
@@ -12,7 +12,7 @@ const ResultCache = new NodeCache({
 export default {
    command: 'lyric',
    hidden: 'lirik',
-   category: 'tools',
+   category: 'explore',
    async run(m, {
       isPrefix,
       command,

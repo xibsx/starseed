@@ -2,7 +2,7 @@ import { nexray } from '../../lib/Request.js'
 
 export default {
    command: ['playvideo', 'ptv'],
-   category: 'downloader',
+   category: 'explore',
    async run(m, {
       sock,
       isPrefix,

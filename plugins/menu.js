@@ -12,17 +12,19 @@
 
 import { DONATE_URL } from '@itsliaaa/baileys'
 
-import { CATEGORY_DESCRIPTIONS, CATEGORY_EMOJIS, FAKE_QUOTE, HIGHLIGHT_LABEL, POPULAR_CATEGORIES } from '../lib/Constants.js'
+import { CATEGORY_DESCRIPTIONS, CATEGORY_EMOJIS, FAKE_QUOTE, POPULAR_CATEGORIES } from '../lib/Constants.js'
 import { fetchThumbnail, frame, greeting, resizeImage, toArray, toTitleCase } from '../lib/Utilities.js'
 import { CommandIndex, ModuleCache } from '../lib/Watcher.js'
 
-let commandRegistry = null,
-   lastKnownSize = 0
+const HIGHLIGHT_LABEL = { highlight_label: 'Most Used' }
+
+let CACHED_REGISTRY = null,
+   LAST_SIZE = 0
 
 const getCommandRegistry = () => {
    const commandIndexSize = Object.keys(CommandIndex).length
-   if (commandRegistry && lastKnownSize === commandIndexSize)
-      return commandRegistry
+   if (CACHED_REGISTRY && LAST_SIZE === commandIndexSize)
+      return CACHED_REGISTRY
 
    const commandsSet = new Set()
    const categoriesSet = new Set()
@@ -48,10 +50,10 @@ const getCommandRegistry = () => {
    for (const key in grouped)
       grouped[key].sort()
 
-   commandRegistry = { commands, categories, grouped }
-   lastKnownSize = commandIndexSize.size
+   CACHED_REGISTRY = { commands, categories, grouped }
+   LAST_SIZE = commandIndexSize.size
 
-   return commandRegistry
+   return CACHED_REGISTRY
 }
 
 export default {

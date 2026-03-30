@@ -4,8 +4,8 @@ import { nexray } from '../../lib/Request.js'
 import { fetchAsBuffer, frame } from '../../lib/Utilities.js'
 
 export default {
-   command: 'play',
-   category: 'downloader',
+   command: 'spotplay',
+   category: 'explore',
    async run(m, {
       sock,
       isPrefix,
@@ -14,28 +14,25 @@ export default {
    }) {
       try {
          if (!text)
-            return m.reply(`👉🏻 *Example*: ${isPrefix + command} you say run`)
+            return m.reply(`👉🏻 *Example*: ${isPrefix + command} abnormal heat`)
          m.react('🕒')
-         const data = await nexray('downloader/ytplay', {
+         const data = await nexray('downloader/spotifyplay', {
             q: text
          })
          if (!data.status)
             return m.reply('❌ Failed to get data.')
-         const printCaption = frame('YOUTUBE PLAY', [
+         const printCaption = frame('SPOTIFY PLAY', [
             `*Title*: ${data.result.title}`,
-            `*Views*: ${data.result.views}`,
-            `*Duration*: ${data.result.duration}`,
-            `*Uploaded*: ${data.result.upload_at}`
+            `*Artist*: ${data.result.artist}`
          ], '🎵')
          m.reply(printCaption, {
             externalAdReply: {
                title: data.result.title,
-               body: data.result.description,
+               body: '✍🏻 Artist: ' + data.result.artist,
                thumbnail: await fetchAsBuffer(data.result.thumbnail || botThumbnail),
                url: data.result.url,
                sourceUrl: data.result.url,
-               largeThumbnail: true,
-               mediaType: 2
+               largeThumbnail: true
             }
          })
          sock.sendMedia(m.chat, data.result.download_url, '', m, {

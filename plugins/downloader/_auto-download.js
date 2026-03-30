@@ -1,8 +1,7 @@
+import { URL_EXTRACT_REGEX } from '../../lib/Constants.js'
 import { nekolabs, nexray } from '../../lib/Request.js'
 import { instagram, tiktok } from '../../lib/Scraper.js'
 import { isURL, resizeImage } from '../../lib/Utilities.js'
-
-export const URL_REGEX = /https?:\/\/[^\s]+?(?=[\s]|$)/
 
 export default {
    async run(m, {
@@ -19,8 +18,8 @@ export default {
          else
             return m.reply(`⚠️ Your limit is not enough to use auto download, try \`${setting.prefixes[0]}claim\` command to claim limit.`)
       }
-      URL_REGEX.lastIndex = 0
-      const match = URL_REGEX.exec(body)
+      URL_EXTRACT_REGEX.lastIndex = 0
+      const match = URL_EXTRACT_REGEX.exec(body)
       if (!match?.[0]) return
       const url = match[0]
       try {
@@ -126,6 +125,28 @@ export default {
                   quoted: m
                })
             sock.sendMedia(m.chat, imageContent[0]?.url || videoContent?.url, data.title, m)
+         }
+         else if (url.includes('twitter.com') || url.includes('x.com')) {
+            m.react('🕒')
+            const data = await nexray('downloader/twitter', {
+               url
+            })
+            if (!data.status)
+               return m.reply('❌ Failed to get data.')
+            if (data.result.length < 2)
+               return sock.sendMedia(m.chat, data.result.download_url[0].url, '', m)
+            const album = data.result.download_url
+               .filter(result => result.type === 'image' || result.type === 'video')
+               .map(value => ({
+                  [value.type]: {
+                     url: value.url
+                  }
+               }))
+            sock.sendMessage(m.chat, {
+               album
+            }, {
+               quoted: m
+            })
          }
          else if (url.includes('videy.co')) {
             m.react('🕒')

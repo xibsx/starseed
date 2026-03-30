@@ -2,7 +2,7 @@ import { zenzxz } from '../../lib/Request.js'
 import { fetchAsBuffer, formatNumber, formatTime, frame } from '../../lib/Utilities.js'
 
 export default {
-   command: ['dcstalk', 'ffstalk', 'igstalk', 'robloxstalk'],
+   command: ['dcstalk', 'ffstalk', 'igstalk', 'robloxstalk', 'ttstalk'],
    category: 'tools',
    async run(m, {
       isPrefix,
@@ -75,15 +75,18 @@ export default {
             const printInfo = frame('INSTAGRAM STALK', [
                `*Username*: @${data.result.username}`,
                `*Name*: ${data.result.name}`,
-               `*Followers*: ${formatNumber(data.result.followers)}`,
-               `*Following*: ${formatNumber(data.result.following)}`,
-               `*Posts*: ${formatNumber(data.result.posts)}`,
                `*Verified*: ${data.result.verified ? '✅' : '❌'}`
             ], '🗒️')
+            const printStatistic = frame('STATISTIC', [
+               `*Followers*: ${formatNumber(data.result.followers)}`,
+               `*Following*: ${formatNumber(data.result.following)}`,
+               `*Posts*: ${formatNumber(data.result.posts)}`
+            ], '📈')
             const printBio = frame('BIO', [
                `${data.result.bio}`
             ], '💭')
             m.reply(printInfo + '\n\n' +
+               printStatistic + '\n\n' +
                printBio, {
                externalAdReply: {
                   title: data.result.name,
@@ -116,6 +119,41 @@ export default {
             ], '💬')
             m.reply(printInfo + '\n\n' +
                printSocial)
+         }
+         else if (command === 'ttstalk') {
+            if (!args[0])
+               return m.reply(`👉🏻 *Example*: ${isPrefix + command} khaby.lame`)
+            m.react('🕒')
+            const data = await zenzxz('stalker/tiktok', {
+               username: args[0]
+            })
+            if (!data.status)
+               return m.reply('❌ Failed to get data.')
+            const printInfo = frame('TIKTOK STALK', [
+               `*Nickname*: ${data.result.nickname}`,
+               `*Username*: @${data.result.username}`,
+               `*Is Verified*: ${data.result.is_verified ? '✅' : '❌'}`
+            ], '🗒️')
+            const printStatistic = frame('STATISTIC', [
+               `*Followers*: ${formatNumber(data.result.stats.followers || 0)}`,
+               `*Following*: ${formatNumber(data.result.stats.following || 0)}`,
+               `*Likes*: ${formatNumber(data.result.stats.heart || 0)}`,
+               `*Videos*: ${formatNumber(data.result.stats.video || 0)}`,
+               `*Friends*: ${formatNumber(data.result.stats.friend || 0)}`
+            ], '📈')
+            const printBio = frame('BIO', [
+               ...data.result.bio.split('\\n')
+            ], '💭')
+            m.reply(printInfo + '\n\n' +
+               printStatistic + '\n\n' +
+               printBio, {
+               externalAdReply: {
+                  title: data.result.nickname,
+                  body: '@' + data.result.username,
+                  thumbnail: await fetchAsBuffer(data.result.avatar),
+                  largeThumbnail: true
+               }
+            })
          }
       }
       catch (error) {

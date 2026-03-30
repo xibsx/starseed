@@ -20,6 +20,7 @@ const ERROR_MESSAGES = [
    'Device logged out',
    'Connection Closed',
    'bad-request',
+   'encryptions',
    'forbidden',
    'terminated',
    'simultaneous',
