@@ -1,11 +1,8 @@
-import { config } from 'dotenv'
 import { fileURLToPath } from 'url'
 import { dirname, join } from 'path'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
-
-config({ path: join(__dirname, '.env') })
 
 export const BOT = process.env.BOT || '6281234567890@s.whatsapp.net'
 export const BOT_NAME = process.env.BOT_NAME || 'Starseed'
