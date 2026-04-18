@@ -1,0 +1,31 @@
+{
+  "name": "Starseed WhatsApp Bot",
+  "description": "A simple WhatsApp bot built on Baileys",
+  "repository": "https://github.com/itsliaaa/starseed",
+  "logo": "https://github.com/itsliaaa/starseed.png",
+  "keywords": ["whatsapp", "bot", "baileys", "nodejs"],
+  "env": {
+    "SESSION_ID": {
+      "description": "Mega session ID for authentication (format: BLAZE~fileID#key)",
+      "required": true
+    },
+    "BOT_NAME": {
+      "description": "Name of your bot",
+      "value": "Starseed",
+      "required": false
+    },
+    "PREFIX": {
+      "description": "Command prefix",
+      "value": ".",
+      "required": false
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    },
+    {
+      "url": "https://github.com/heroku/heroku-buildpack-ffmpeg.git"
+    }
+  ]
+}
